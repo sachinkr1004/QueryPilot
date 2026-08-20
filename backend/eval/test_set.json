@@ -1,0 +1,146 @@
+[
+  {
+    "id": "concert_singer_dev_01",
+    "split": "dev",
+    "db_id": "concert_singer",
+    "question": "How many singers do we have?",
+    "gold_sql": "SELECT count(*) FROM singer"
+  },
+  {
+    "id": "concert_singer_dev_02",
+    "split": "dev",
+    "db_id": "concert_singer",
+    "question": "List all singer names in concerts in year 2014.",
+    "gold_sql": "SELECT T2.name FROM singer_in_concert AS T1 JOIN singer AS T2 ON T1.singer_id = T2.singer_id JOIN concert AS T3 ON T1.concert_id = T3.concert_id WHERE T3.year = 2014"
+  },
+  {
+    "id": "concert_singer_dev_03",
+    "split": "dev",
+    "db_id": "concert_singer",
+    "question": "Show all countries and the number of singers in each country.",
+    "gold_sql": "SELECT country, count(*) FROM singer GROUP BY country"
+  },
+  {
+    "id": "concert_singer_holdout_01",
+    "split": "holdout",
+    "db_id": "concert_singer",
+    "question": "List all song names by singers above the average age.",
+    "gold_sql": "SELECT song_name FROM singer WHERE age > (SELECT avg(age) FROM singer)"
+  },
+
+  {
+    "id": "pets_1_dev_01",
+    "split": "dev",
+    "db_id": "pets_1",
+    "question": "Find the number of pets whose weight is heavier than 10.",
+    "gold_sql": "SELECT count(*) FROM pets WHERE weight > 10"
+  },
+  {
+    "id": "pets_1_dev_02",
+    "split": "dev",
+    "db_id": "pets_1",
+    "question": "Find number of pets owned by students who are older than 20.",
+    "gold_sql": "SELECT count(*) FROM student AS T1 JOIN has_pet AS T2 ON T1.stuid = T2.stuid WHERE T1.age > 20"
+  },
+  {
+    "id": "pets_1_dev_03",
+    "split": "dev",
+    "db_id": "pets_1",
+    "question": "Find the maximum weight for each type of pet. List the maximum weight and pet type.",
+    "gold_sql": "SELECT max(weight), petType FROM pets GROUP BY petType"
+  },
+  {
+    "id": "pets_1_holdout_01",
+    "split": "holdout",
+    "db_id": "pets_1",
+    "question": "Find the first name and gender of student who have more than one pet.",
+    "gold_sql": "SELECT T1.fname, T1.sex FROM student AS T1 JOIN has_pet AS T2 ON T1.stuid = T2.stuid GROUP BY T1.stuid HAVING count(*) > 1"
+  },
+
+  {
+    "id": "car_1_dev_01",
+    "split": "dev",
+    "db_id": "car_1",
+    "question": "How many continents are there?",
+    "gold_sql": "SELECT count(*) FROM CONTINENTS;"
+  },
+  {
+    "id": "car_1_dev_02",
+    "split": "dev",
+    "db_id": "car_1",
+    "question": "How many countries does each continent have? List the continent id, continent name and the number of countries.",
+    "gold_sql": "SELECT T1.ContId, T1.Continent, count(*) FROM CONTINENTS AS T1 JOIN COUNTRIES AS T2 ON T1.ContId = T2.Continent GROUP BY T1.ContId;"
+  },
+  {
+    "id": "car_1_dev_03",
+    "split": "dev",
+    "db_id": "car_1",
+    "question": "Which model of the car has the minimum horsepower?",
+    "gold_sql": "SELECT T1.Model FROM CAR_NAMES AS T1 JOIN CARS_DATA AS T2 ON T1.MakeId = T2.Id ORDER BY T2.horsepower ASC LIMIT 1;"
+  },
+  {
+    "id": "car_1_holdout_01",
+    "split": "holdout",
+    "db_id": "car_1",
+    "question": "Find the model of the car whose weight is below the average weight.",
+    "gold_sql": "SELECT T1.model FROM CAR_NAMES AS T1 JOIN CARS_DATA AS T2 ON T1.MakeId = T2.Id WHERE T2.Weight < (SELECT avg(Weight) FROM CARS_DATA)"
+  },
+
+  {
+    "id": "employee_hire_evaluation_dev_01",
+    "split": "dev",
+    "db_id": "employee_hire_evaluation",
+    "question": "What is the number of employees from each city?",
+    "gold_sql": "SELECT count(*), city FROM employee GROUP BY city"
+  },
+  {
+    "id": "employee_hire_evaluation_dev_02",
+    "split": "dev",
+    "db_id": "employee_hire_evaluation",
+    "question": "Find the name of the employee who got the highest one time bonus.",
+    "gold_sql": "SELECT t1.name FROM employee AS t1 JOIN evaluation AS t2 ON t1.Employee_ID = t2.Employee_ID ORDER BY t2.bonus DESC LIMIT 1"
+  },
+  {
+    "id": "employee_hire_evaluation_dev_03",
+    "split": "dev",
+    "db_id": "employee_hire_evaluation",
+    "question": "Which cities do more than one employee under age 30 come from?",
+    "gold_sql": "SELECT city FROM employee WHERE age < 30 GROUP BY city HAVING count(*) > 1"
+  },
+  {
+    "id": "employee_hire_evaluation_holdout_01",
+    "split": "holdout",
+    "db_id": "employee_hire_evaluation",
+    "question": "Find the names of stores whose number products is more than the average number of products.",
+    "gold_sql": "SELECT name FROM shop WHERE number_products > (SELECT avg(number_products) FROM shop)"
+  },
+
+  {
+    "id": "world_1_dev_01",
+    "split": "dev",
+    "db_id": "world_1",
+    "question": "What are the names of all the countries that became independent after 1950?",
+    "gold_sql": "SELECT Name FROM country WHERE IndepYear > 1950"
+  },
+  {
+    "id": "world_1_dev_02",
+    "split": "dev",
+    "db_id": "world_1",
+    "question": "Which region is the city Kabul located in?",
+    "gold_sql": "SELECT Region FROM country AS T1 JOIN city AS T2 ON T1.Code = T2.CountryCode WHERE T2.Name = \"Kabul\""
+  },
+  {
+    "id": "world_1_dev_03",
+    "split": "dev",
+    "db_id": "world_1",
+    "question": "What is name of the country that speaks the largest number of languages?",
+    "gold_sql": "SELECT T1.Name FROM country AS T1 JOIN countrylanguage AS T2 ON T1.Code = T2.CountryCode GROUP BY T1.Name ORDER BY COUNT(*) DESC LIMIT 1"
+  },
+  {
+    "id": "world_1_holdout_01",
+    "split": "holdout",
+    "db_id": "world_1",
+    "question": "How many countries speak both English and Dutch?",
+    "gold_sql": "SELECT COUNT(*) FROM (SELECT T1.Name FROM country AS T1 JOIN countrylanguage AS T2 ON T1.Code = T2.CountryCode WHERE T2.Language = \"English\" INTERSECT SELECT T1.Name FROM country AS T1 JOIN countrylanguage AS T2 ON T1.Code = T2.CountryCode WHERE T2.Language = \"Dutch\")"
+  }
+]
