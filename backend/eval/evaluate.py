@@ -5,7 +5,7 @@ from pathlib import Path
 
 from llm.retrieve_schema import retrieve_schema
 from llm.retrieve_examples import retrieve_examples
-from llm.baseline_client import generate_sql
+from llm.baseline_client import generate_sql, correct_sql
 from db import execute_query
 
 
@@ -315,14 +315,24 @@ def evaluate_one(test_case):
     gold_sql = test_case["gold_sql"]
 
     retrieved_db = None
-    generated_sql = None
-
-    generated_result = None
-    gold_result = None
+    schema_text = None
 
     examples = []
 
+    generated_sql = None
+    corrected_sql = None
+    final_sql = None
+
+    initial_result = None
+    generated_result = None
+    gold_result = None
+
+    initial_error = None
     error = None
+
+    correction_used = False
+    correction_attempts = 0
+    correction_success = False
 
     strict_correct = False
     semantic_correct = False
@@ -343,7 +353,7 @@ def evaluate_one(test_case):
         )
 
         # ----------------------------------------------------
-        # 2. Retrieve SAFE RAG examples
+        # 2. Retrieve SAFE Top-5 RAG examples
         # ----------------------------------------------------
 
         examples = retrieve_examples(
@@ -353,7 +363,7 @@ def evaluate_one(test_case):
         )
 
         # ----------------------------------------------------
-        # 3. Generate SQL
+        # 3. Generate initial SQL
         # ----------------------------------------------------
 
         generated_sql = generate_sql(
@@ -362,16 +372,63 @@ def evaluate_one(test_case):
             examples
         )
 
-        # ----------------------------------------------------
-        # 4. Execute generated PostgreSQL SQL
-        # ----------------------------------------------------
-
-        generated_result = execute_query(
-            generated_sql
-        )
+        final_sql = generated_sql
 
         # ----------------------------------------------------
-        # 5. Execute Spider gold SQL
+        # 4. Execute initial SQL
+        # ----------------------------------------------------
+
+        try:
+
+            initial_result = execute_query(
+                generated_sql
+            )
+
+            generated_result = initial_result
+
+        except Exception as execution_error:
+
+            initial_error = str(
+                execution_error
+            )
+
+            # ------------------------------------------------
+            # 5. Self-correct exactly once
+            # ------------------------------------------------
+
+            correction_used = True
+            correction_attempts = 1
+
+            corrected_sql = correct_sql(
+                question=question,
+                schema_text=schema_text,
+                failed_sql=generated_sql,
+                error_message=initial_error,
+                examples=examples
+            )
+
+            final_sql = corrected_sql
+
+            # ------------------------------------------------
+            # 6. Execute corrected SQL
+            # ------------------------------------------------
+
+            try:
+
+                generated_result = execute_query(
+                    corrected_sql
+                )
+
+                correction_success = True
+
+            except Exception as corrected_error:
+
+                error = str(
+                    corrected_error
+                )
+
+        # ----------------------------------------------------
+        # 7. Execute Spider gold SQL
         # ----------------------------------------------------
 
         gold_result = execute_gold_sql(
@@ -380,33 +437,33 @@ def evaluate_one(test_case):
         )
 
         # ----------------------------------------------------
-        # 6. Strict comparison
+        # 8. Compare final successful result
         # ----------------------------------------------------
 
-        strict_correct = compare_results(
-            generated_result,
-            gold_result
-        )
+        if error is None:
 
-        # ----------------------------------------------------
-        # 7. Semantic comparison
-        # ----------------------------------------------------
-
-        if strict_correct:
-
-            semantic_correct = True
-
-        else:
-
-            tie_accepted = tie_aware_check(
-                db_id,
-                generated_sql,
-                gold_sql,
+            strict_correct = compare_results(
                 generated_result,
                 gold_result
             )
 
-            semantic_correct = tie_accepted
+            if strict_correct:
+
+                semantic_correct = True
+
+            else:
+
+                tie_accepted = tie_aware_check(
+                    db_id,
+                    final_sql,
+                    gold_sql,
+                    generated_result,
+                    gold_result
+                )
+
+                semantic_correct = (
+                    tie_accepted
+                )
 
     except Exception as e:
 
@@ -421,26 +478,35 @@ def evaluate_one(test_case):
         "id": test_id,
 
         "expected_db": db_id,
-
         "retrieved_db": retrieved_db,
 
         "question": question,
 
-        "generated_sql": generated_sql,
+        "rag_examples": len(examples),
 
+        "generated_sql": generated_sql,
+        "corrected_sql": corrected_sql,
+        "final_sql": final_sql,
+
+        "initial_result": initial_result,
+
+        # Keep old key for compatibility.
         "generated_result": generated_result,
 
         "gold_result": gold_result,
 
-        "rag_examples": len(examples),
+        "correction_used": correction_used,
+        "correction_attempts": correction_attempts,
+        "correction_success": correction_success,
+
+        "initial_error": initial_error,
+
+        # Final pipeline error only.
+        "error": error,
 
         "strict_correct": strict_correct,
-
         "semantic_correct": semantic_correct,
-
         "tie_accepted": tie_accepted,
-
-        "error": error
     }
 
 
@@ -453,39 +519,40 @@ def main():
     test_set = load_test_set()
 
     # IMPORTANT:
-    # Only DEV questions are evaluated.
+    # Only DEV questions are evaluated here.
     # Holdout remains untouched.
-
     dev_cases = [
-
         item
         for item in test_set
-
         if item["split"] == "dev"
     ]
 
     print()
-
     print("=" * 70)
-    print("QUERYpilot PHASE 6 RAG EVALUATION")
+    print(
+        "QUERYPILOT PHASE 6 "
+        "SELF-CORRECTION EVALUATION"
+    )
     print("=" * 70)
 
     print()
-
     print(
         f"Running {len(dev_cases)} "
         f"DEV evaluation cases..."
     )
-
     print()
 
     results = []
 
     strict_correct_count = 0
     semantic_correct_count = 0
-
-    error_count = 0
     tie_accepted_count = 0
+
+    initial_error_count = 0
+    final_error_count = 0
+
+    correction_used_count = 0
+    correction_success_count = 0
 
     for index, test_case in enumerate(
         dev_cases,
@@ -500,7 +567,6 @@ def main():
         )
 
         print()
-
         print(
             "Question:",
             test_case["question"]
@@ -510,7 +576,9 @@ def main():
             test_case
         )
 
-        results.append(result)
+        results.append(
+            result
+        )
 
         # ----------------------------------------------------
         # Counters
@@ -525,8 +593,17 @@ def main():
         if result["tie_accepted"]:
             tie_accepted_count += 1
 
+        if result["initial_error"] is not None:
+            initial_error_count += 1
+
         if result["error"] is not None:
-            error_count += 1
+            final_error_count += 1
+
+        if result["correction_used"]:
+            correction_used_count += 1
+
+        if result["correction_success"]:
+            correction_success_count += 1
 
         # ----------------------------------------------------
         # Status
@@ -534,22 +611,36 @@ def main():
 
         if result["strict_correct"]:
 
-            status = "✅ STRICT CORRECT"
+            if result["correction_used"]:
+                status = (
+                    "✅ STRICT CORRECT "
+                    "(AFTER SELF-CORRECTION)"
+                )
+            else:
+                status = "✅ STRICT CORRECT"
 
         elif result["tie_accepted"]:
 
-            status = (
-                "🟡 SEMANTIC CORRECT "
-                "(NON-DETERMINISTIC TIE)"
-            )
+            if result["correction_used"]:
+                status = (
+                    "🟡 SEMANTIC CORRECT "
+                    "(AFTER SELF-CORRECTION)"
+                )
+            else:
+                status = (
+                    "🟡 SEMANTIC CORRECT "
+                    "(NON-DETERMINISTIC TIE)"
+                )
 
         elif result["error"] is not None:
-
             status = "❌ ERROR"
 
         else:
-
             status = "❌ WRONG"
+
+        # ----------------------------------------------------
+        # Per-question report
+        # ----------------------------------------------------
 
         print()
 
@@ -571,23 +662,57 @@ def main():
         print()
 
         print("Generated SQL:")
-
         print()
-
         print(
             result["generated_sql"]
         )
 
+        if result["correction_used"]:
+
+            print()
+
+            print(
+                "Initial execution error:"
+            )
+
+            print(
+                result["initial_error"]
+            )
+
+            print()
+
+            print("Corrected SQL:")
+            print()
+
+            print(
+                result["corrected_sql"]
+            )
+
+            print()
+
+            print(
+                "Correction attempts:",
+                result["correction_attempts"]
+            )
+
+            print(
+                "Correction success :",
+                result["correction_success"]
+            )
+
         print()
 
-        print("Status:", status)
+        print(
+            "Status:",
+            status
+        )
 
         if result["error"]:
 
             print()
 
             print(
-                "Error:",
+                "Final error:",
                 result["error"]
             )
 
@@ -597,28 +722,26 @@ def main():
     # SUMMARY
     # ========================================================
 
-    total = len(dev_cases)
+    total = len(
+        dev_cases
+    )
 
     strict_accuracy = (
-
         (
             strict_correct_count
             / total
         )
         * 100
-
         if total > 0
         else 0
     )
 
     semantic_accuracy = (
-
         (
             semantic_correct_count
             / total
         )
         * 100
-
         if total > 0
         else 0
     )
@@ -626,20 +749,46 @@ def main():
     strict_wrong = (
         total
         - strict_correct_count
-        - error_count
+        - final_error_count
     )
 
     semantic_wrong = (
         total
         - semantic_correct_count
-        - error_count
+        - final_error_count
+    )
+
+    execution_success_count = (
+        total
+        - final_error_count
+    )
+
+    execution_success_rate = (
+        (
+            execution_success_count
+            / total
+        )
+        * 100
+        if total > 0
+        else 0
+    )
+
+    correction_success_rate = (
+        (
+            correction_success_count
+            / correction_used_count
+        )
+        * 100
+        if correction_used_count > 0
+        else 0
     )
 
     print()
     print("=" * 70)
 
     print(
-        "PHASE 6 RAG EVALUATION SUMMARY"
+        "PHASE 6 SELF-CORRECTION "
+        "EVALUATION SUMMARY"
     )
 
     print("=" * 70)
@@ -661,11 +810,6 @@ def main():
     print(
         f"Strict wrong                 : "
         f"{strict_wrong}"
-    )
-
-    print(
-        f"Execution errors             : "
-        f"{error_count}"
     )
 
     print(
@@ -698,6 +842,40 @@ def main():
     print()
 
     print(
+        f"Initial execution errors     : "
+        f"{initial_error_count}"
+    )
+
+    print(
+        f"Final execution errors       : "
+        f"{final_error_count}"
+    )
+
+    print(
+        f"Execution success rate       : "
+        f"{execution_success_rate:.2f}%"
+    )
+
+    print()
+
+    print(
+        f"Self-correction triggered    : "
+        f"{correction_used_count}"
+    )
+
+    print(
+        f"Successful corrections       : "
+        f"{correction_success_count}"
+    )
+
+    print(
+        f"Correction success rate      : "
+        f"{correction_success_rate:.2f}%"
+    )
+
+    print()
+
+    print(
         "RAG                         : "
         "ENABLED (Top-5 safe examples)"
     )
@@ -714,7 +892,7 @@ def main():
 
     print(
         "Self-correction             : "
-        "NOT USED"
+        "ENABLED (max 1 retry)"
     )
 
     print()
@@ -723,4 +901,5 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()
