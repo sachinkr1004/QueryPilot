@@ -44,3 +44,9 @@ backend/eval/results/
 *.py.save
 *_backup.py
 *_phase6_*.py
+
+# Fine-tuning generated data / model artifacts
+backend/finetuning/data/
+backend/finetuning/checkpoints/
+backend/finetuning/models/
+backend/finetuning/outputs/

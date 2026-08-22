@@ -1,6 +1,7 @@
 import json
 import re
 import sqlite3
+import sys
 from pathlib import Path
 
 from llm.retrieve_schema import retrieve_schema
@@ -518,13 +519,26 @@ def main():
 
     test_set = load_test_set()
 
-    # IMPORTANT:
-    # Only DEV questions are evaluated here.
-    # Holdout remains untouched.
-    dev_cases = [
+    # --------------------------------------------------------
+    # Select evaluation split
+    # --------------------------------------------------------
+
+    split = (
+        sys.argv[1].strip().lower()
+        if len(sys.argv) > 1
+        else "dev"
+    )
+
+    if split not in {"dev", "holdout"}:
+        print(
+            "❌ Invalid split. Use: dev or holdout"
+        )
+        sys.exit(1)
+
+    eval_cases = [
         item
         for item in test_set
-        if item["split"] == "dev"
+        if item["split"] == split
     ]
 
     print()
@@ -537,8 +551,8 @@ def main():
 
     print()
     print(
-        f"Running {len(dev_cases)} "
-        f"DEV evaluation cases..."
+        f"Running {len(eval_cases)} "
+        f"{split.upper()} evaluation cases..."
     )
     print()
 
@@ -555,14 +569,14 @@ def main():
     correction_success_count = 0
 
     for index, test_case in enumerate(
-        dev_cases,
+        eval_cases,
         1
     ):
 
         print("=" * 70)
 
         print(
-            f"[{index}/{len(dev_cases)}] "
+            f"[{index}/{len(eval_cases)}] "
             f"{test_case['id']}"
         )
 
@@ -723,7 +737,7 @@ def main():
     # ========================================================
 
     total = len(
-        dev_cases
+        eval_cases
     )
 
     strict_accuracy = (
@@ -796,7 +810,7 @@ def main():
     print()
 
     print(
-        f"Total DEV questions          : "
+        f"Total {split.upper()} questions          : "
         f"{total}"
     )
 
