@@ -21,6 +21,15 @@ from llm.baseline_client import (
     format_examples,
 )
 
+from finetuning.schema_retriever import (
+    retrieve_relevant_tables_with_fk_hops,
+)
+
+from finetuning.value_retriever import (
+    retrieve_relevant_values,
+    format_value_context,
+)
+
 
 # ============================================================
 # PATHS
@@ -228,6 +237,34 @@ def build_retrieval_context(
             f"{database_name}"
         )
 
+    # --------------------------------------------------------
+    # Production-style table + value retrieval
+    # --------------------------------------------------------
+
+    table_results = (
+        retrieve_relevant_tables_with_fk_hops(
+            question=question,
+            database_name=database_name,
+            top_k=7,
+            fk_hops=2,
+        )
+    )
+
+    table_names = [
+        item["table_name"]
+        for item in table_results
+    ]
+
+    value_matches = retrieve_relevant_values(
+        question=question,
+        database_name=database_name,
+        table_names=table_names,
+    )
+
+    value_text = format_value_context(
+        value_matches
+    )
+
     # Retrieve extra candidates because the current
     # training question may retrieve itself.
     retrieved_examples = retrieve_examples(
@@ -273,6 +310,11 @@ def build_retrieval_context(
 {schema_text}
 
 
+RELEVANT DATABASE VALUES:
+
+{value_text}
+
+
 SAFE RAG EXAMPLES:
 
 {example_text}
@@ -286,6 +328,9 @@ USER QUESTION:
     return {
         "database_name": database_name,
         "schema_text": schema_text,
+        "table_names": table_names,
+        "value_matches": value_matches,
+        "value_text": value_text,
         "examples": examples,
         "input_context": input_context.strip(),
     }
@@ -338,7 +383,8 @@ def build_training_record(
     instruction = (
         "Generate the correct PostgreSQL SQL query "
         "for the user's question using only the "
-        "provided database schema and safe RAG examples. "
+        "provided database schema, relevant database "
+        "values, and safe RAG examples. "
         "Return only one executable PostgreSQL query."
     )
 

@@ -1,0 +1,802 @@
+import argparse
+import json
+from pathlib import Path
+
+import torch
+
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+)
+
+from db import execute_query
+
+from llm.baseline_client import correct_sql
+
+from eval.evaluate import (
+    execute_gold_sql,
+    compare_results,
+    tie_aware_check,
+)
+
+from finetuning.prepare_data import (
+    build_retrieval_context,
+)
+
+
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
+BASE_MODEL = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
+
+BASE_DIR = Path(__file__).resolve().parent
+
+TEST_SET_PATH = BASE_DIR / "test_set.json"
+
+RESULTS_DIR = BASE_DIR / "results"
+
+INSTRUCTION = (
+    "Generate the correct PostgreSQL SQL query "
+    "for the user's question using only the "
+    "provided database schema, relevant database "
+    "values, and safe RAG examples. "
+    "Return only one executable PostgreSQL query."
+)
+
+MAX_NEW_TOKENS = 256
+
+
+# ============================================================
+# LOAD TEST SET
+# ============================================================
+
+def load_test_set():
+    with TEST_SET_PATH.open(
+        "r",
+        encoding="utf-8",
+    ) as file:
+        return json.load(file)
+
+
+# ============================================================
+# LOAD BASE QWEN MODEL
+# ============================================================
+
+def load_base_model():
+
+    print("=" * 80)
+    print("LOADING BASE QWEN MODEL")
+    print("=" * 80)
+    print()
+
+    print("Base model :", BASE_MODEL)
+    print()
+
+    print("Loading tokenizer...")
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        BASE_MODEL
+    )
+
+    print("✅ Tokenizer loaded")
+    print()
+
+    print("Loading base model...")
+
+    model = (
+        AutoModelForCausalLM.from_pretrained(
+            BASE_MODEL,
+            torch_dtype="auto",
+        )
+    )
+
+    print("✅ Base model loaded")
+    print()
+
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
+
+    model = model.to(device)
+    model.eval()
+
+    print("Device:", device)
+    print()
+
+    print(
+        "🎯 BASE QWEN READY FOR EVALUATION"
+    )
+
+    print("=" * 80)
+    print()
+
+    return tokenizer, model, device
+
+
+# ============================================================
+# GENERATE SQL WITH BASE QWEN
+# ============================================================
+
+def generate_base_sql(
+    question,
+    database_name,
+    gold_sql,
+    tokenizer,
+    model,
+    device,
+):
+
+    context = build_retrieval_context(
+        question=question,
+        database_name=database_name,
+        gold_sql=gold_sql,
+    )
+
+    messages = [
+        {
+            "role": "system",
+            "content": INSTRUCTION,
+        },
+        {
+            "role": "user",
+            "content": context["input_context"],
+        },
+    ]
+
+    inputs = tokenizer.apply_chat_template(
+        messages,
+        tokenize=True,
+        add_generation_prompt=True,
+        return_tensors="pt",
+        return_dict=True,
+    )
+
+    inputs = {
+        key: value.to(device)
+        for key, value in inputs.items()
+    }
+
+    prompt_length = (
+        inputs["input_ids"].shape[1]
+    )
+
+    with torch.no_grad():
+        generated = model.generate(
+            **inputs,
+            max_new_tokens=MAX_NEW_TOKENS,
+            do_sample=False,
+            pad_token_id=tokenizer.eos_token_id,
+        )
+
+    generated_tokens = generated[
+        0,
+        prompt_length:
+    ]
+
+    sql = tokenizer.decode(
+        generated_tokens,
+        skip_special_tokens=True,
+    ).strip()
+
+    return sql, context
+
+
+# ============================================================
+# EVALUATE ONE CASE
+# ============================================================
+
+def evaluate_one(
+    test_case,
+    tokenizer,
+    model,
+    device,
+):
+
+    test_id = test_case["id"]
+    db_id = test_case["db_id"]
+    question = test_case["question"]
+    gold_sql = test_case["gold_sql"]
+
+    generated_sql = None
+    corrected_sql = None
+    final_sql = None
+
+    initial_result = None
+    generated_result = None
+    gold_result = None
+
+    initial_error = None
+    error = None
+
+    correction_used = False
+    correction_attempts = 0
+    correction_success = False
+
+    strict_correct = False
+    semantic_correct = False
+    tie_accepted = False
+
+    rag_examples = 0
+
+    try:
+
+        # ----------------------------------------------------
+        # 1. Generate SQL using base Qwen
+        # ----------------------------------------------------
+
+        generated_sql, context = (
+            generate_base_sql(
+                question=question,
+                database_name=db_id,
+                gold_sql=gold_sql,
+                tokenizer=tokenizer,
+                model=model,
+                device=device,
+            )
+        )
+
+        final_sql = generated_sql
+
+        rag_examples = len(
+            context["examples"]
+        )
+
+        # ----------------------------------------------------
+        # 2. Execute base-Qwen SQL
+        # ----------------------------------------------------
+
+        try:
+
+            initial_result = execute_query(
+                generated_sql
+            )
+
+            generated_result = initial_result
+
+        except Exception as execution_error:
+
+            initial_error = str(
+                execution_error
+            )
+
+            # ------------------------------------------------
+            # 3. Self-correct exactly once
+            # ------------------------------------------------
+
+            correction_used = True
+            correction_attempts = 1
+
+            corrected_sql = correct_sql(
+                question=question,
+                schema_text=context["schema_text"],
+                failed_sql=generated_sql,
+                error_message=initial_error,
+                examples=context["examples"],
+            )
+
+            final_sql = corrected_sql
+
+            # ------------------------------------------------
+            # 4. Execute corrected SQL
+            # ------------------------------------------------
+
+            try:
+
+                generated_result = execute_query(
+                    corrected_sql
+                )
+
+                correction_success = True
+
+            except Exception as corrected_error:
+
+                error = str(
+                    corrected_error
+                )
+
+        # ----------------------------------------------------
+        # 5. Execute gold SQL
+        # ----------------------------------------------------
+
+        gold_result = execute_gold_sql(
+            db_id,
+            gold_sql,
+        )
+
+        # ----------------------------------------------------
+        # 6. Compare final successful result
+        # ----------------------------------------------------
+
+        if (
+            error is None
+            and generated_result is not None
+        ):
+
+            strict_correct = compare_results(
+                generated_result,
+                gold_result,
+            )
+
+            if strict_correct:
+
+                semantic_correct = True
+
+            else:
+
+                tie_accepted = tie_aware_check(
+                    db_id,
+                    final_sql,
+                    gold_sql,
+                    generated_result,
+                    gold_result,
+                )
+
+                semantic_correct = tie_accepted
+
+    except Exception as exception:
+
+        error = str(exception)
+
+        strict_correct = False
+        semantic_correct = False
+        tie_accepted = False
+
+    return {
+        "id": test_id,
+        "db_id": db_id,
+        "question": question,
+        "rag_examples": rag_examples,
+
+        "generated_sql": generated_sql,
+        "corrected_sql": corrected_sql,
+        "final_sql": final_sql,
+
+        "gold_sql": gold_sql,
+
+        "initial_result": initial_result,
+        "generated_result": generated_result,
+        "gold_result": gold_result,
+
+        "correction_used": correction_used,
+        "correction_attempts": correction_attempts,
+        "correction_success": correction_success,
+
+        "initial_error": initial_error,
+        "error": error,
+
+        "strict_correct": strict_correct,
+        "semantic_correct": semantic_correct,
+        "tie_accepted": tie_accepted,
+    }
+
+
+# ============================================================
+# RUN EVALUATION
+# ============================================================
+
+def run_evaluation(
+    cases,
+    tokenizer,
+    model,
+    device,
+):
+
+    results = []
+
+    for index, test_case in enumerate(
+        cases,
+        start=1,
+    ):
+
+        print("=" * 80)
+
+        print(
+            f"[{index}/{len(cases)}] "
+            f"{test_case['id']}"
+        )
+
+        print()
+
+        print(
+            "Question:",
+            test_case["question"],
+        )
+
+        print()
+
+        result = evaluate_one(
+            test_case,
+            tokenizer,
+            model,
+            device,
+        )
+
+        results.append(result)
+
+        print("Generated SQL:")
+        print()
+        print(result["generated_sql"])
+
+        if result["correction_used"]:
+
+            print()
+            print("Initial execution error:")
+            print()
+            print(result["initial_error"])
+
+            print()
+            print("Corrected SQL:")
+            print()
+            print(result["corrected_sql"])
+
+            print()
+            print(
+                "Correction attempts:",
+                result["correction_attempts"],
+            )
+
+            print(
+                "Correction success :",
+                result["correction_success"],
+            )
+
+        print()
+
+        if result["strict_correct"]:
+
+            if result["correction_used"]:
+                status = (
+                    "✅ STRICT CORRECT "
+                    "(AFTER SELF-CORRECTION)"
+                )
+            else:
+                status = "✅ STRICT CORRECT"
+
+        elif result["tie_accepted"]:
+
+            if result["correction_used"]:
+                status = (
+                    "🟡 SEMANTIC CORRECT "
+                    "(AFTER SELF-CORRECTION)"
+                )
+            else:
+                status = (
+                    "🟡 SEMANTIC CORRECT "
+                    "(NON-DETERMINISTIC TIE)"
+                )
+
+        elif result["error"]:
+
+            status = "❌ ERROR"
+
+        else:
+
+            status = "❌ WRONG"
+
+        print("Status:", status)
+
+        if result["error"]:
+
+            print()
+            print("Final error:")
+            print()
+            print(result["error"])
+
+        print()
+
+    return results
+
+
+# ============================================================
+# BUILD SUMMARY
+# ============================================================
+
+def build_summary(results):
+
+    total = len(results)
+
+    strict_correct = sum(
+        item["strict_correct"]
+        for item in results
+    )
+
+    semantic_correct = sum(
+        item["semantic_correct"]
+        for item in results
+    )
+
+    tie_accepted = sum(
+        item["tie_accepted"]
+        for item in results
+    )
+
+    errors = sum(
+        item["error"] is not None
+        for item in results
+    )
+
+    correction_used = sum(
+        item["correction_used"]
+        for item in results
+    )
+
+    correction_success = sum(
+        item["correction_success"]
+        for item in results
+    )
+
+    execution_success = (
+        total
+        - errors
+    )
+
+    strict_accuracy = (
+        strict_correct / total * 100
+        if total
+        else 0
+    )
+
+    semantic_accuracy = (
+        semantic_correct / total * 100
+        if total
+        else 0
+    )
+
+    execution_success_rate = (
+        execution_success / total * 100
+        if total
+        else 0
+    )
+
+    correction_success_rate = (
+        correction_success
+        / correction_used
+        * 100
+        if correction_used
+        else 0
+    )
+
+    return {
+        "questions": total,
+
+        "strict_correct": strict_correct,
+        "strict_accuracy": round(
+            strict_accuracy,
+            2,
+        ),
+
+        "semantic_correct": semantic_correct,
+        "semantic_accuracy": round(
+            semantic_accuracy,
+            2,
+        ),
+
+        "tie_equivalent_accepted": (
+            tie_accepted
+        ),
+
+        "execution_errors": errors,
+        "execution_success_rate": round(
+            execution_success_rate,
+            2,
+        ),
+
+        "self_correction_triggered": (
+            correction_used
+        ),
+
+        "successful_corrections": (
+            correction_success
+        ),
+
+        "correction_success_rate": round(
+            correction_success_rate,
+            2,
+        ),
+    }
+
+
+# ============================================================
+# PRINT SUMMARY
+# ============================================================
+
+def print_summary(
+    split,
+    summary,
+):
+
+    print()
+    print("=" * 80)
+    print(
+        "PHASE 7.8 — BASE-QWEN "
+        f"{split.upper()} SUMMARY"
+    )
+    print("=" * 80)
+    print()
+
+    print(
+        "Questions              :",
+        summary["questions"],
+    )
+
+    print(
+        "Strict correct         :",
+        summary["strict_correct"],
+    )
+
+    print(
+        "Strict accuracy        :",
+        f"{summary['strict_accuracy']:.2f}%",
+    )
+
+    print()
+
+    print(
+        "Semantic correct       :",
+        summary["semantic_correct"],
+    )
+
+    print(
+        "Semantic accuracy      :",
+        f"{summary['semantic_accuracy']:.2f}%",
+    )
+
+    print(
+        "Tie-equivalent accepted:",
+        summary["tie_equivalent_accepted"],
+    )
+
+    print()
+
+    print(
+        "Execution errors       :",
+        summary["execution_errors"],
+    )
+
+    print(
+        "Execution success rate :",
+        f"{summary['execution_success_rate']:.2f}%",
+    )
+
+    print()
+
+    print(
+        "Self-correction triggered:",
+        summary["self_correction_triggered"],
+    )
+
+    print(
+        "Successful corrections   :",
+        summary["successful_corrections"],
+    )
+
+    print(
+        "Correction success rate  :",
+        f"{summary['correction_success_rate']:.2f}%",
+    )
+
+    print()
+    print("=" * 80)
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+def main():
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "split",
+        nargs="?",
+        default="dev",
+        choices=[
+            "dev",
+            "holdout",
+        ],
+    )
+
+    parser.add_argument(
+        "--one",
+        action="store_true",
+        help=(
+            "Evaluate only the first case "
+            "for a smoke test."
+        ),
+    )
+
+    args = parser.parse_args()
+
+    test_set = load_test_set()
+
+    cases = [
+        item
+        for item in test_set
+        if item["split"] == args.split
+    ]
+
+    if args.one:
+        cases = cases[:1]
+
+    tokenizer, model, device = (
+        load_base_model()
+    )
+
+    print("=" * 80)
+    print("PHASE 7.8 — BASE-QWEN EVALUATION")
+    print("=" * 80)
+    print()
+
+    print("Split :", args.split)
+    print("Cases :", len(cases))
+    print("Mode  :", "ONE CASE" if args.one else "FULL")
+    print()
+
+    results = run_evaluation(
+        cases,
+        tokenizer,
+        model,
+        device,
+    )
+
+    summary = build_summary(
+        results
+    )
+
+    print_summary(
+        args.split,
+        summary,
+    )
+
+    if not args.one:
+
+        RESULTS_DIR.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        output_path = (
+            RESULTS_DIR
+            / (
+                "phase7_base_qwen_"
+                f"{args.split}.json"
+            )
+        )
+
+        output_data = {
+            "phase": "7.8",
+            "name": "Base Qwen Evaluation",
+            "model": BASE_MODEL,
+            "split": args.split,
+            "summary": summary,
+            "results": results,
+        }
+
+        output_path.write_text(
+            json.dumps(
+                output_data,
+                indent=2,
+                default=str,
+            ),
+            encoding="utf-8",
+        )
+
+        print()
+        print(
+            "Results saved:",
+            output_path,
+        )
+
+    print()
+    print("=" * 80)
+    print(
+        "🎯 BASE-QWEN EVALUATION FINISHED"
+    )
+    print("=" * 80)
+
+
+if __name__ == "__main__":
+    main()
