@@ -1,0 +1,48 @@
+{
+  "phase": "8",
+  "experiment_id": "example_experiment_id",
+  "experiment_name": "Example controlled ablation",
+  "benchmark": "phase8_ablation",
+  "status": "template",
+  "config": {
+    "generator": "baseline",
+    "top_k": 7,
+    "fk_expansion": true,
+    "fk_hops": 2,
+    "value_grounding": true,
+    "rag_examples": true,
+    "self_correction": true,
+    "semantic_review": true
+  },
+  "control_policy": {
+    "changed_variable": "example_variable",
+    "reference_experiment_id": null,
+    "one_variable_at_a_time": true
+  },
+  "summary": {
+    "questions": null,
+    "strict_correct": null,
+    "strict_execution_accuracy": null,
+    "semantic_correct": null,
+    "semantic_accuracy": null,
+    "execution_successes": null,
+    "execution_success_rate": null,
+    "required_table_recall": null,
+    "mean_retrieved_tables": null,
+    "mean_context_tokens": null,
+    "self_correction_triggered": null,
+    "successful_corrections": null,
+    "self_correction_success_rate": null,
+    "semantic_reviews_run": null,
+    "semantic_rewrites": null,
+    "successful_semantic_reviews": null,
+    "semantic_review_success_rate": null,
+    "mean_latency_ms": null,
+    "median_latency_ms": null,
+    "p95_latency_ms": null,
+    "input_tokens": null,
+    "output_tokens": null,
+    "estimated_cost_usd": null
+  },
+  "results": []
+}

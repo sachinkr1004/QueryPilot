@@ -1,0 +1,74 @@
+{
+  "phase": "8.1",
+  "name": "QueryPilot Phase-8 Frozen Evaluation Metrics",
+  "primary_metrics": {
+    "strict_execution_accuracy": {
+      "unit": "percent",
+      "higher_is_better": true
+    },
+    "semantic_accuracy": {
+      "unit": "percent",
+      "higher_is_better": true
+    },
+    "execution_success_rate": {
+      "unit": "percent",
+      "higher_is_better": true
+    }
+  },
+  "retrieval_metrics": {
+    "required_table_recall": {
+      "unit": "percent",
+      "higher_is_better": true
+    },
+    "retrieved_table_count": {
+      "unit": "tables",
+      "higher_is_better": false
+    },
+    "context_size": {
+      "unit": "tokens",
+      "higher_is_better": false
+    }
+  },
+  "recovery_metrics": {
+    "self_correction_trigger_rate": {
+      "unit": "percent"
+    },
+    "self_correction_success_rate": {
+      "unit": "percent",
+      "higher_is_better": true
+    },
+    "semantic_review_rewrite_rate": {
+      "unit": "percent"
+    },
+    "semantic_review_success_rate": {
+      "unit": "percent",
+      "higher_is_better": true
+    }
+  },
+  "efficiency_metrics": {
+    "mean_latency_ms": {
+      "unit": "milliseconds",
+      "higher_is_better": false
+    },
+    "median_latency_ms": {
+      "unit": "milliseconds",
+      "higher_is_better": false
+    },
+    "p95_latency_ms": {
+      "unit": "milliseconds",
+      "higher_is_better": false
+    },
+    "input_tokens": {
+      "unit": "tokens",
+      "higher_is_better": false
+    },
+    "output_tokens": {
+      "unit": "tokens",
+      "higher_is_better": false
+    },
+    "estimated_cost_usd": {
+      "unit": "USD",
+      "higher_is_better": false
+    }
+  }
+}

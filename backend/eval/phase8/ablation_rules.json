@@ -1,0 +1,34 @@
+{
+  "phase": "8.1",
+  "name": "QueryPilot Controlled Ablation Rules",
+  "status": "frozen",
+  "core_rule": "one_variable_at_a_time",
+  "rules": {
+    "same_benchmark_for_compared_runs": true,
+    "same_question_order": true,
+    "same_generator_unless_generator_is_ablation_target": true,
+    "same_retrieval_configuration_unless_retrieval_is_ablation_target": true,
+    "same_value_grounding_unless_value_grounding_is_ablation_target": true,
+    "same_self_correction_unless_self_correction_is_ablation_target": true,
+    "same_semantic_review_unless_semantic_review_is_ablation_target": true,
+    "same_decoding_configuration": true,
+    "record_complete_configuration_for_every_run": true,
+    "record_changed_variable": true,
+    "record_reference_experiment": true
+  },
+  "final_test_rules": {
+    "not_used_for_ablation_selection": true,
+    "not_used_for_threshold_tuning": true,
+    "not_used_for_prompt_tuning": true,
+    "not_used_for_model_selection": true,
+    "run_only_after_final_configuration_freeze": true,
+    "no_configuration_changes_after_final_test": true
+  },
+  "gold_information_rules": {
+    "gold_sql_hidden_from_generator": true,
+    "gold_result_hidden_from_generator": true,
+    "gold_sql_hidden_from_semantic_reviewer": true,
+    "gold_result_hidden_from_semantic_reviewer": true,
+    "gold_information_used_only_for_post_prediction_evaluation": true
+  }
+}

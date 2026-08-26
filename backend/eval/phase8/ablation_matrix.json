@@ -1,0 +1,163 @@
+{
+  "phase": "8.3",
+  "name": "QueryPilot Controlled Ablation Matrix",
+  "status": "frozen_before_execution",
+
+  "reference_configuration": {
+    "generator": "phase8_baseline",
+    "top_k": 7,
+    "fk_expansion": true,
+    "fk_hops": 2,
+    "value_grounding": true,
+    "rag_examples": true,
+    "rag_limit": 5,
+    "self_correction": true,
+    "semantic_review": true
+  },
+
+  "experiments": [
+    {
+      "experiment_id": "phase8_ref_full",
+      "changed_variable": "none",
+      "reference_experiment": null,
+      "config": {
+        "top_k": 7,
+        "fk_expansion": true,
+        "fk_hops": 2,
+        "value_grounding": true,
+        "rag_examples": true,
+        "rag_limit": 5,
+        "self_correction": true,
+        "semantic_review": true
+      }
+    },
+
+    {
+      "experiment_id": "phase8_topk_3",
+      "changed_variable": "top_k",
+      "reference_experiment": "phase8_ref_full",
+      "config": {
+        "top_k": 3,
+        "fk_expansion": true,
+        "fk_hops": 2,
+        "value_grounding": true,
+        "rag_examples": true,
+        "rag_limit": 5,
+        "self_correction": true,
+        "semantic_review": true
+      }
+    },
+
+    {
+      "experiment_id": "phase8_topk_5",
+      "changed_variable": "top_k",
+      "reference_experiment": "phase8_ref_full",
+      "config": {
+        "top_k": 5,
+        "fk_expansion": true,
+        "fk_hops": 2,
+        "value_grounding": true,
+        "rag_examples": true,
+        "rag_limit": 5,
+        "self_correction": true,
+        "semantic_review": true
+      }
+    },
+
+    {
+      "experiment_id": "phase8_fk_off",
+      "changed_variable": "fk_expansion",
+      "reference_experiment": "phase8_ref_full",
+      "config": {
+        "top_k": 7,
+        "fk_expansion": false,
+        "fk_hops": 2,
+        "value_grounding": true,
+        "rag_examples": true,
+        "rag_limit": 5,
+        "self_correction": true,
+        "semantic_review": true
+      }
+    },
+
+    {
+      "experiment_id": "phase8_fk_hops_1",
+      "changed_variable": "fk_hops",
+      "reference_experiment": "phase8_ref_full",
+      "config": {
+        "top_k": 7,
+        "fk_expansion": true,
+        "fk_hops": 1,
+        "value_grounding": true,
+        "rag_examples": true,
+        "rag_limit": 5,
+        "self_correction": true,
+        "semantic_review": true
+      }
+    },
+
+    {
+      "experiment_id": "phase8_values_off",
+      "changed_variable": "value_grounding",
+      "reference_experiment": "phase8_ref_full",
+      "config": {
+        "top_k": 7,
+        "fk_expansion": true,
+        "fk_hops": 2,
+        "value_grounding": false,
+        "rag_examples": true,
+        "rag_limit": 5,
+        "self_correction": true,
+        "semantic_review": true
+      }
+    },
+
+    {
+      "experiment_id": "phase8_rag_off",
+      "changed_variable": "rag_examples",
+      "reference_experiment": "phase8_ref_full",
+      "config": {
+        "top_k": 7,
+        "fk_expansion": true,
+        "fk_hops": 2,
+        "value_grounding": true,
+        "rag_examples": false,
+        "rag_limit": 5,
+        "self_correction": true,
+        "semantic_review": true
+      }
+    },
+
+    {
+      "experiment_id": "phase8_correction_off",
+      "changed_variable": "self_correction",
+      "reference_experiment": "phase8_ref_full",
+      "config": {
+        "top_k": 7,
+        "fk_expansion": true,
+        "fk_hops": 2,
+        "value_grounding": true,
+        "rag_examples": true,
+        "rag_limit": 5,
+        "self_correction": false,
+        "semantic_review": true
+      }
+    },
+
+    {
+      "experiment_id": "phase8_review_off",
+      "changed_variable": "semantic_review",
+      "reference_experiment": "phase8_ref_full",
+      "config": {
+        "top_k": 7,
+        "fk_expansion": true,
+        "fk_hops": 2,
+        "value_grounding": true,
+        "rag_examples": true,
+        "rag_limit": 5,
+        "self_correction": true,
+        "semantic_review": false
+      }
+    }
+  ]
+}

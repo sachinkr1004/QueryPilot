@@ -1,0 +1,40 @@
+{
+  "phase": "8.1",
+  "name": "QueryPilot Controlled Evaluation and Ablation Protocol",
+  "status": "frozen_before_final_test_selection",
+  "dataset_policy": {
+    "phase7_dev_questions": 15,
+    "phase7_holdout_questions": 5,
+    "phase7_questions_consumed": 20,
+    "phase8_ablation_benchmark": "phase7_consumed_dev_and_holdout",
+    "final_test_source": "Spider TEST",
+    "final_test_candidate_questions": 2147,
+    "final_test_candidate_databases": 40,
+    "training_database_overlap": 0,
+    "available_sqlite_databases": 40
+  },
+  "final_test_policy": {
+    "database_count": 20,
+    "questions_per_database": 5,
+    "total_questions": 100,
+    "random_seed": 42,
+    "database_selection": "deterministic_structural_stratification",
+    "database_selection_features": [
+      "table_count",
+      "column_count",
+      "foreign_key_count"
+    ],
+    "question_selection": "deterministic_seeded_sampling",
+    "selection_must_not_use_model_performance": true,
+    "selection_must_not_use_prediction_results": true,
+    "final_test_runs_after_configuration_freeze": true
+  },
+  "experimental_rules": {
+    "final_test_is_untouched_during_ablations": true,
+    "no_final_test_configuration_tuning": true,
+    "gold_sql_not_available_to_generator": true,
+    "gold_results_not_available_to_generator": true,
+    "gold_sql_not_available_to_semantic_reviewer": true,
+    "gold_results_not_available_to_semantic_reviewer": true
+  }
+}
