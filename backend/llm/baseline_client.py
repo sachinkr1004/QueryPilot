@@ -527,6 +527,8 @@ CORRECTED POSTGRESQL SQL:
     response = client.chat.completions.create(
         model="openai/gpt-oss-120b",
         max_completion_tokens=1000,
+        temperature=0,
+        seed=42,
         messages=[
             {
                 "role": "user",
@@ -814,6 +816,8 @@ REVIEW DECISION:
     response = client.chat.completions.create(
         model="openai/gpt-oss-120b",
         max_completion_tokens=1000,
+        temperature=0,
+        seed=42,
         messages=[
             {
                 "role": "user",

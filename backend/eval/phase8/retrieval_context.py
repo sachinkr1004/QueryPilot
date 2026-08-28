@@ -22,6 +22,53 @@ from llm.baseline_client import (
 
 
 # ============================================================
+# POSTGRESQL IDENTIFIER FORMATTING
+# ============================================================
+
+def quote_identifier(identifier):
+    """
+    Quote an identifier exactly for PostgreSQL.
+    """
+
+    escaped = str(identifier).replace(
+        '"',
+        '""',
+    )
+
+    return f'"{escaped}"'
+
+
+def format_table_identifier(
+    database_name,
+    table_name,
+):
+    """
+    Return an explicit schema-qualified PostgreSQL table
+    identifier.
+    """
+
+    return (
+        f"{quote_identifier(database_name)}."
+        f"{quote_identifier(table_name)}"
+    )
+
+
+def format_column_reference(
+    database_name,
+    table_name,
+    column_name,
+):
+    """
+    Return an explicit schema.table.column reference.
+    """
+
+    return (
+        f"{format_table_identifier(database_name, table_name)}."
+        f"{quote_identifier(column_name)}"
+    )
+
+
+# ============================================================
 # BUILD RETRIEVED SCHEMA TEXT
 # ============================================================
 
@@ -48,8 +95,15 @@ def build_retrieved_schema_text(
         ]
 
         lines.append("")
+        qualified_table_name = (
+            format_table_identifier(
+                database_name,
+                table_name,
+            )
+        )
+
         lines.append(
-            f"TABLE: {table_name}"
+            f"TABLE: {qualified_table_name}"
         )
 
         primary_keys = set(
@@ -72,7 +126,7 @@ def build_retrieved_schema_text(
                 suffix = " PRIMARY KEY"
 
             lines.append(
-                f"  {column_name} "
+                f"  {quote_identifier(column_name)} "
                 f"({column_type})"
                 f"{suffix}"
             )
@@ -86,13 +140,27 @@ def build_retrieved_schema_text(
             and
             fk["target_table"] in selected
         ):
+            source_reference = (
+                format_column_reference(
+                    database_name,
+                    fk["source_table"],
+                    fk["source_column"],
+                )
+            )
+
+            target_reference = (
+                format_column_reference(
+                    database_name,
+                    fk["target_table"],
+                    fk["target_column"],
+                )
+            )
+
             relationships.append(
                 (
-                    f'{fk["source_table"]}.'
-                    f'{fk["source_column"]}'
+                    f"{source_reference}"
                     " -> "
-                    f'{fk["target_table"]}.'
-                    f'{fk["target_column"]}'
+                    f"{target_reference}"
                 )
             )
 

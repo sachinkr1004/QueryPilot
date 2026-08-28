@@ -670,14 +670,74 @@ def run_experiment(
     experiment_id,
     config,
     one=False,
+    resume=False,
 ):
-
     cases = load_ablation_cases()
 
     if one:
         cases = cases[:1]
 
+    RESULTS_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    checkpoint_path = (
+        RESULTS_DIR
+        / f"{experiment_id}.partial.json"
+    )
+
     results = []
+
+    # --------------------------------------------------------
+    # LOAD CHECKPOINT
+    # --------------------------------------------------------
+
+    if resume and checkpoint_path.exists():
+        checkpoint = json.loads(
+            checkpoint_path.read_text(
+                encoding="utf-8",
+            )
+        )
+
+        checkpoint_config = checkpoint.get(
+            "config"
+        )
+
+        if checkpoint_config != config:
+            raise ValueError(
+                "Checkpoint config does not match "
+                "the current experiment config. "
+                "Refusing to mix ablation runs."
+            )
+
+        results = checkpoint.get(
+            "results",
+            [],
+        )
+
+        print()
+        print(
+            "RESUME CHECKPOINT FOUND:",
+            checkpoint_path,
+        )
+        print(
+            "Completed cases:",
+            f"{len(results)}/{len(cases)}",
+        )
+        print()
+
+    elif checkpoint_path.exists():
+        raise RuntimeError(
+            "Partial checkpoint already exists: "
+            f"{checkpoint_path}. "
+            "Use --resume to continue it."
+        )
+
+    completed_ids = {
+        result["id"]
+        for result in results
+    }
 
     print("=" * 90)
     print(
@@ -685,14 +745,14 @@ def run_experiment(
         "ABLATION EXPERIMENT"
     )
     print("=" * 90)
-
     print()
+
     print(
         "Experiment:",
         experiment_id,
     )
-
     print()
+
     print("CONFIG")
     print("-" * 90)
 
@@ -703,19 +763,27 @@ def run_experiment(
 
     print()
 
+    # --------------------------------------------------------
+    # EVALUATE CASES
+    # --------------------------------------------------------
+
     for index, test_case in enumerate(
         cases,
         start=1,
     ):
-
         print("=" * 90)
-
         print(
             f"[{index}/{len(cases)}] "
             f"{test_case['id']}"
         )
-
         print()
+
+        if test_case["id"] in completed_ids:
+            print(
+                "Already completed — skipping."
+            )
+            print()
+            continue
 
         result = evaluate_one(
             test_case,
@@ -724,6 +792,58 @@ def run_experiment(
 
         results.append(
             result
+        )
+
+        completed_ids.add(
+            test_case["id"]
+        )
+
+        # Keep checkpoint results in benchmark order.
+        result_by_id = {
+            item["id"]: item
+            for item in results
+        }
+
+        results = [
+            result_by_id[case["id"]]
+            for case in cases
+            if case["id"] in result_by_id
+        ]
+
+        # ----------------------------------------------------
+        # ATOMIC CHECKPOINT SAVE
+        # ----------------------------------------------------
+
+        checkpoint_output = {
+            "phase": "8.2",
+            "experiment_id": experiment_id,
+            "benchmark": "phase7_consumed_20",
+            "config": config,
+            "completed": len(results),
+            "total": len(cases),
+            "results": results,
+        }
+
+        temp_checkpoint_path = Path(
+            str(checkpoint_path) + ".tmp"
+        )
+
+        temp_checkpoint_path.write_text(
+            json.dumps(
+                checkpoint_output,
+                indent=2,
+                default=str,
+            ),
+            encoding="utf-8",
+        )
+
+        temp_checkpoint_path.replace(
+            checkpoint_path
+        )
+
+        print(
+            "Checkpoint saved :",
+            f"{len(results)}/{len(cases)}",
         )
 
         print(
@@ -826,6 +946,15 @@ def main():
         action="store_true",
     )
 
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help=(
+            "Resume an interrupted experiment "
+            "from its checkpoint."
+        ),
+    )
+
     args = parser.parse_args()
 
     config = {
@@ -856,6 +985,7 @@ def main():
         ),
         config=config,
         one=args.one,
+        resume=args.resume,
     )
 
     print("=" * 90)
@@ -910,6 +1040,21 @@ def main():
             "Results saved:",
             output_path,
         )
+
+        # Remove checkpoint only after the final
+        # experiment result has been saved safely.
+        checkpoint_path = (
+            RESULTS_DIR
+            / f"{args.experiment_id}.partial.json"
+        )
+
+        if checkpoint_path.exists():
+            checkpoint_path.unlink()
+
+            print(
+                "Checkpoint removed:",
+                checkpoint_path,
+            )
 
     print()
     print("=" * 90)
