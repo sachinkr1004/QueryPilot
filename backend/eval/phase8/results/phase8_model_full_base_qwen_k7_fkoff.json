@@ -1,0 +1,3417 @@
+{
+  "phase": "8.2",
+  "experiment_id": "phase8_model_full_base_qwen_k7_fkoff",
+  "benchmark": "phase7_consumed_20",
+  "config": {
+    "generator": "base_qwen",
+    "top_k": 7,
+    "fk_expansion": false,
+    "fk_hops": 2,
+    "value_grounding": true,
+    "rag_examples": true,
+    "rag_limit": 5,
+    "self_correction": true,
+    "semantic_review": true
+  },
+  "summary": {
+    "questions": 20,
+    "strict_correct": 19,
+    "strict_execution_accuracy": 95.0,
+    "semantic_correct": 20,
+    "semantic_accuracy": 100.0,
+    "execution_successes": 20,
+    "execution_success_rate": 100.0,
+    "self_correction_triggered": 20,
+    "successful_corrections": 20,
+    "self_correction_success_rate": 100.0,
+    "semantic_reviews_run": 20,
+    "semantic_rewrites": 2,
+    "successful_semantic_reviews": 19,
+    "semantic_review_success_rate": 95.0,
+    "required_table_recall": 100.0,
+    "mean_retrieved_tables": 4.2,
+    "mean_context_characters": 2069.25,
+    "mean_context_words": 262.9,
+    "mean_latency_ms": 22051.3,
+    "median_latency_ms": 22780.57,
+    "p95_latency_ms": 29490.28
+  },
+  "results": [
+    {
+      "id": "concert_singer_dev_01",
+      "db_id": "concert_singer",
+      "split": "dev",
+      "question": "How many singers do we have?",
+      "retrieved_tables": [
+        "stadium",
+        "singer",
+        "concert",
+        "singer_in_concert"
+      ],
+      "retrieved_table_count": 4,
+      "required_tables": [
+        "singer"
+      ],
+      "retrieved_required_tables": [
+        "singer"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 2129,
+      "context_words": 258,
+      "rag_example_count": 5,
+      "value_match_count": 0,
+      "generated_sql": "SELECT count(*) FROM singer",
+      "corrected_sql": "SELECT count(*) FROM \"concert_singer\".\"singer\";",
+      "reviewed_sql": "SELECT count(*) FROM \"concert_singer\".\"singer\";",
+      "final_sql": "SELECT count(*) FROM \"concert_singer\".\"singer\";",
+      "gold_sql": "SELECT count(*) FROM singer",
+      "generated_result": [
+        [
+          6
+        ]
+      ],
+      "gold_result": [
+        [
+          6
+        ]
+      ],
+      "initial_error": "relation \"singer\" does not exist\nLINE 1: SELECT count(*) FROM singer\n                             ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 137.71,
+        "generation": 444.24,
+        "execution_and_correction": 1072.36,
+        "semantic_review": 668.99,
+        "total": 2324.88
+      }
+    },
+    {
+      "id": "concert_singer_dev_02",
+      "db_id": "concert_singer",
+      "split": "dev",
+      "question": "List all singer names in concerts in year 2014.",
+      "retrieved_tables": [
+        "stadium",
+        "singer",
+        "concert",
+        "singer_in_concert"
+      ],
+      "retrieved_table_count": 4,
+      "required_tables": [
+        "concert",
+        "singer",
+        "singer_in_concert"
+      ],
+      "retrieved_required_tables": [
+        "concert",
+        "singer",
+        "singer_in_concert"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 2129,
+      "context_words": 256,
+      "rag_example_count": 5,
+      "value_match_count": 2,
+      "generated_sql": "SELECT T2.name FROM singer_in_concert AS T1 JOIN singer AS T2 ON T1.singer_id  =  T2.singer_id WHERE YEAR  =  2014",
+      "corrected_sql": "SELECT T2.\"Name\"\nFROM \"concert_singer\".\"singer_in_concert\" AS T1\nJOIN \"concert_singer\".\"singer\" AS T2 ON T1.\"Singer_ID\" = T2.\"Singer_ID\"\nJOIN \"concert_singer\".\"concert\" AS C ON T1.\"concert_ID\" = C.\"concert_ID\"\nWHERE C.\"Year\" = '2014';",
+      "reviewed_sql": "SELECT T2.\"Name\"\nFROM \"concert_singer\".\"singer_in_concert\" AS T1\nJOIN \"concert_singer\".\"singer\" AS T2 ON T1.\"Singer_ID\" = T2.\"Singer_ID\"\nJOIN \"concert_singer\".\"concert\" AS C ON T1.\"concert_ID\" = C.\"concert_ID\"\nWHERE C.\"Year\" = '2014';",
+      "final_sql": "SELECT T2.\"Name\"\nFROM \"concert_singer\".\"singer_in_concert\" AS T1\nJOIN \"concert_singer\".\"singer\" AS T2 ON T1.\"Singer_ID\" = T2.\"Singer_ID\"\nJOIN \"concert_singer\".\"concert\" AS C ON T1.\"concert_ID\" = C.\"concert_ID\"\nWHERE C.\"Year\" = '2014';",
+      "gold_sql": "SELECT T2.name FROM singer_in_concert AS T1 JOIN singer AS T2 ON T1.singer_id = T2.singer_id JOIN concert AS T3 ON T1.concert_id = T3.concert_id WHERE T3.year = 2014",
+      "generated_result": [
+        [
+          "Timbaland"
+        ],
+        [
+          "Justin Brown"
+        ],
+        [
+          "John Nizinik"
+        ],
+        [
+          "Justin Brown"
+        ],
+        [
+          "Tribal King"
+        ],
+        [
+          "Rose White"
+        ]
+      ],
+      "gold_result": [
+        [
+          "Timbaland"
+        ],
+        [
+          "Justin Brown"
+        ],
+        [
+          "John Nizinik"
+        ],
+        [
+          "Justin Brown"
+        ],
+        [
+          "Tribal King"
+        ],
+        [
+          "Rose White"
+        ]
+      ],
+      "initial_error": "relation \"singer_in_concert\" does not exist\nLINE 1: SELECT T2.name FROM singer_in_concert AS T1 JOIN singer AS T...\n                            ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 81.66,
+        "generation": 1260.46,
+        "execution_and_correction": 1355.94,
+        "semantic_review": 10510.91,
+        "total": 13210.36
+      }
+    },
+    {
+      "id": "concert_singer_dev_03",
+      "db_id": "concert_singer",
+      "split": "dev",
+      "question": "Show all countries and the number of singers in each country.",
+      "retrieved_tables": [
+        "stadium",
+        "singer",
+        "concert",
+        "singer_in_concert"
+      ],
+      "retrieved_table_count": 4,
+      "required_tables": [
+        "singer"
+      ],
+      "retrieved_required_tables": [
+        "singer"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 2116,
+      "context_words": 260,
+      "rag_example_count": 5,
+      "value_match_count": 0,
+      "generated_sql": "SELECT country ,  count(*) FROM singer GROUP BY country",
+      "corrected_sql": "SELECT \"Country\", count(*) FROM \"concert_singer\".\"singer\" GROUP BY \"Country\"",
+      "reviewed_sql": "SELECT \"Country\", count(*) FROM \"concert_singer\".\"singer\" GROUP BY \"Country\"",
+      "final_sql": "SELECT \"Country\", count(*) FROM \"concert_singer\".\"singer\" GROUP BY \"Country\"",
+      "gold_sql": "SELECT country, count(*) FROM singer GROUP BY country",
+      "generated_result": [
+        [
+          "France",
+          4
+        ],
+        [
+          "United States",
+          1
+        ],
+        [
+          "Netherlands",
+          1
+        ]
+      ],
+      "gold_result": [
+        [
+          "France",
+          4
+        ],
+        [
+          "Netherlands",
+          1
+        ],
+        [
+          "United States",
+          1
+        ]
+      ],
+      "initial_error": "relation \"singer\" does not exist\nLINE 1: SELECT country ,  count(*) FROM singer GROUP BY country\n                                        ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 71.59,
+        "generation": 559.69,
+        "execution_and_correction": 12203.56,
+        "semantic_review": 14059.3,
+        "total": 26894.5
+      }
+    },
+    {
+      "id": "concert_singer_holdout_01",
+      "db_id": "concert_singer",
+      "split": "holdout",
+      "question": "List all song names by singers above the average age.",
+      "retrieved_tables": [
+        "stadium",
+        "singer",
+        "concert",
+        "singer_in_concert"
+      ],
+      "retrieved_table_count": 4,
+      "required_tables": [
+        "singer"
+      ],
+      "retrieved_required_tables": [
+        "singer"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 2013,
+      "context_words": 247,
+      "rag_example_count": 5,
+      "value_match_count": 0,
+      "generated_sql": "SELECT song_name FROM singer WHERE age  >  ( SELECT avg(age) FROM singer )",
+      "corrected_sql": "SELECT \"Song_Name\" FROM \"concert_singer\".\"singer\" WHERE \"Age\" > (SELECT AVG(\"Age\") FROM \"concert_singer\".\"singer\")",
+      "reviewed_sql": "SELECT \"Song_Name\" FROM \"concert_singer\".\"singer\" WHERE \"Age\" > (SELECT AVG(\"Age\") FROM \"concert_singer\".\"singer\")",
+      "final_sql": "SELECT \"Song_Name\" FROM \"concert_singer\".\"singer\" WHERE \"Age\" > (SELECT AVG(\"Age\") FROM \"concert_singer\".\"singer\")",
+      "gold_sql": "SELECT song_name FROM singer WHERE age > (SELECT avg(age) FROM singer)",
+      "generated_result": [
+        [
+          "You"
+        ],
+        [
+          "Sun"
+        ],
+        [
+          "Gentleman"
+        ]
+      ],
+      "gold_result": [
+        [
+          "You"
+        ],
+        [
+          "Sun"
+        ],
+        [
+          "Gentleman"
+        ]
+      ],
+      "initial_error": "relation \"singer\" does not exist\nLINE 1: SELECT song_name FROM singer WHERE age  >  ( SELECT avg(age)...\n                              ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 76.37,
+        "generation": 703.79,
+        "execution_and_correction": 9197.5,
+        "semantic_review": 13096.59,
+        "total": 23075.75
+      }
+    },
+    {
+      "id": "pets_1_dev_01",
+      "db_id": "pets_1",
+      "split": "dev",
+      "question": "Find the number of pets whose weight is heavier than 10.",
+      "retrieved_tables": [
+        "Student",
+        "Has_Pet",
+        "Pets"
+      ],
+      "retrieved_table_count": 3,
+      "required_tables": [
+        "pets"
+      ],
+      "retrieved_required_tables": [
+        "pets"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 1322,
+      "context_words": 186,
+      "rag_example_count": 5,
+      "value_match_count": 0,
+      "generated_sql": "SELECT count(*) FROM pets WHERE weight  >  10",
+      "corrected_sql": "SELECT count(*) FROM \"pets_1\".\"Pets\" WHERE \"weight\" > 10;",
+      "reviewed_sql": "SELECT count(*) FROM \"pets_1\".\"Pets\" WHERE \"weight\" > 10;",
+      "final_sql": "SELECT count(*) FROM \"pets_1\".\"Pets\" WHERE \"weight\" > 10;",
+      "gold_sql": "SELECT count(*) FROM pets WHERE weight > 10",
+      "generated_result": [
+        [
+          2
+        ]
+      ],
+      "gold_result": [
+        [
+          2
+        ]
+      ],
+      "initial_error": "relation \"pets\" does not exist\nLINE 1: SELECT count(*) FROM pets WHERE weight  >  10\n                             ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 133.08,
+        "generation": 564.05,
+        "execution_and_correction": 8040.48,
+        "semantic_review": 11940.18,
+        "total": 20678.97
+      }
+    },
+    {
+      "id": "pets_1_dev_02",
+      "db_id": "pets_1",
+      "split": "dev",
+      "question": "Find number of pets owned by students who are older than 20.",
+      "retrieved_tables": [
+        "Student",
+        "Has_Pet",
+        "Pets"
+      ],
+      "retrieved_table_count": 3,
+      "required_tables": [
+        "has_pet",
+        "student"
+      ],
+      "retrieved_required_tables": [
+        "has_pet",
+        "student"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 1960,
+      "context_words": 308,
+      "rag_example_count": 5,
+      "value_match_count": 0,
+      "generated_sql": "SELECT count(*) FROM student AS T1 JOIN has_pet AS T2 ON T1.stuid  =  T2.stuid WHERE T1.age  >  20",
+      "corrected_sql": "SELECT count(*) FROM \"pets_1\".\"Student\" AS T1 JOIN \"pets_1\".\"Has_Pet\" AS T2 ON T1.\"StuID\" = T2.\"StuID\" WHERE T1.\"Age\" > 20;",
+      "reviewed_sql": "SELECT count(*) FROM \"pets_1\".\"Student\" AS T1 JOIN \"pets_1\".\"Has_Pet\" AS T2 ON T1.\"StuID\" = T2.\"StuID\" WHERE T1.\"Age\" > 20;",
+      "final_sql": "SELECT count(*) FROM \"pets_1\".\"Student\" AS T1 JOIN \"pets_1\".\"Has_Pet\" AS T2 ON T1.\"StuID\" = T2.\"StuID\" WHERE T1.\"Age\" > 20;",
+      "gold_sql": "SELECT count(*) FROM student AS T1 JOIN has_pet AS T2 ON T1.stuid = T2.stuid WHERE T1.age > 20",
+      "generated_result": [
+        [
+          0
+        ]
+      ],
+      "gold_result": [
+        [
+          0
+        ]
+      ],
+      "initial_error": "relation \"student\" does not exist\nLINE 1: SELECT count(*) FROM student AS T1 JOIN has_pet AS T2 ON T1....\n                             ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 76.39,
+        "generation": 1115.04,
+        "execution_and_correction": 9500.23,
+        "semantic_review": 15215.15,
+        "total": 25908.07
+      }
+    },
+    {
+      "id": "pets_1_dev_03",
+      "db_id": "pets_1",
+      "split": "dev",
+      "question": "Find the maximum weight for each type of pet. List the maximum weight and pet type.",
+      "retrieved_tables": [
+        "Student",
+        "Has_Pet",
+        "Pets"
+      ],
+      "retrieved_table_count": 3,
+      "required_tables": [
+        "pets"
+      ],
+      "retrieved_required_tables": [
+        "pets"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 1392,
+      "context_words": 197,
+      "rag_example_count": 5,
+      "value_match_count": 0,
+      "generated_sql": "SELECT max(weight) ,  pettype FROM pets",
+      "corrected_sql": "SELECT max(\"weight\") , \"PetType\" FROM \"pets_1\".\"Pets\" GROUP BY \"PetType\"",
+      "reviewed_sql": "SELECT max(\"weight\") , \"PetType\" FROM \"pets_1\".\"Pets\" GROUP BY \"PetType\"",
+      "final_sql": "SELECT max(\"weight\") , \"PetType\" FROM \"pets_1\".\"Pets\" GROUP BY \"PetType\"",
+      "gold_sql": "SELECT max(weight), petType FROM pets GROUP BY petType",
+      "generated_result": [
+        [
+          13.4,
+          "dog"
+        ],
+        [
+          12.0,
+          "cat"
+        ]
+      ],
+      "gold_result": [
+        [
+          12.0,
+          "cat"
+        ],
+        [
+          13.4,
+          "dog"
+        ]
+      ],
+      "initial_error": "relation \"pets\" does not exist\nLINE 1: SELECT max(weight) ,  pettype FROM pets\n                                           ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 75.29,
+        "generation": 456.48,
+        "execution_and_correction": 8202.05,
+        "semantic_review": 13070.64,
+        "total": 21805.73
+      }
+    },
+    {
+      "id": "pets_1_holdout_01",
+      "db_id": "pets_1",
+      "split": "holdout",
+      "question": "Find the first name and gender of student who have more than one pet.",
+      "retrieved_tables": [
+        "Student",
+        "Has_Pet",
+        "Pets"
+      ],
+      "retrieved_table_count": 3,
+      "required_tables": [
+        "has_pet",
+        "student"
+      ],
+      "retrieved_required_tables": [
+        "has_pet",
+        "student"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 2177,
+      "context_words": 345,
+      "rag_example_count": 5,
+      "value_match_count": 0,
+      "generated_sql": "SELECT DISTINCT T1.fname ,  T1.gender FROM student AS T1 JOIN has_pet AS T2 ON T1.stuid  =  T2.stuid GROUP BY T1.stuid HAVING count(*)  >  1",
+      "corrected_sql": "SELECT T1.\"Fname\", T1.\"Sex\" FROM \"pets_1\".\"Student\" AS T1 JOIN \"pets_1\".\"Has_Pet\" AS T2 ON T1.\"StuID\" = T2.\"StuID\" GROUP BY T1.\"StuID\", T1.\"Fname\", T1.\"Sex\" HAVING COUNT(*) > 1",
+      "reviewed_sql": "SELECT T1.\"Fname\", T1.\"Sex\" FROM \"pets_1\".\"Student\" AS T1 JOIN \"pets_1\".\"Has_Pet\" AS T2 ON T1.\"StuID\" = T2.\"StuID\" GROUP BY T1.\"StuID\", T1.\"Fname\", T1.\"Sex\" HAVING COUNT(*) > 1",
+      "final_sql": "SELECT T1.\"Fname\", T1.\"Sex\" FROM \"pets_1\".\"Student\" AS T1 JOIN \"pets_1\".\"Has_Pet\" AS T2 ON T1.\"StuID\" = T2.\"StuID\" GROUP BY T1.\"StuID\", T1.\"Fname\", T1.\"Sex\" HAVING COUNT(*) > 1",
+      "gold_sql": "SELECT T1.fname, T1.sex FROM student AS T1 JOIN has_pet AS T2 ON T1.stuid = T2.stuid GROUP BY T1.stuid HAVING count(*) > 1",
+      "generated_result": [
+        [
+          "Tracy",
+          "F"
+        ]
+      ],
+      "gold_result": [
+        [
+          "Tracy",
+          "F"
+        ]
+      ],
+      "initial_error": "relation \"student\" does not exist\nLINE 1: SELECT DISTINCT T1.fname ,  T1.gender FROM student AS T1 JOI...\n                                                   ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 66.16,
+        "generation": 1450.6,
+        "execution_and_correction": 10596.66,
+        "semantic_review": 17375.52,
+        "total": 29490.28
+      }
+    },
+    {
+      "id": "car_1_dev_01",
+      "db_id": "car_1",
+      "split": "dev",
+      "question": "How many continents are there?",
+      "retrieved_tables": [
+        "continents",
+        "countries",
+        "car_makers",
+        "model_list",
+        "car_names",
+        "cars_data"
+      ],
+      "retrieved_table_count": 6,
+      "required_tables": [
+        "continents"
+      ],
+      "retrieved_required_tables": [
+        "continents"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 2161,
+      "context_words": 263,
+      "rag_example_count": 5,
+      "value_match_count": 0,
+      "generated_sql": "SELECT count(*) FROM continents",
+      "corrected_sql": "SELECT count(*) FROM \"car_1\".\"continents\";",
+      "reviewed_sql": "SELECT count(*) FROM \"car_1\".\"continents\";",
+      "final_sql": "SELECT count(*) FROM \"car_1\".\"continents\";",
+      "gold_sql": "SELECT count(*) FROM CONTINENTS;",
+      "generated_result": [
+        [
+          5
+        ]
+      ],
+      "gold_result": [
+        [
+          5
+        ]
+      ],
+      "initial_error": "relation \"continents\" does not exist\nLINE 1: SELECT count(*) FROM continents\n                             ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 194.34,
+        "generation": 457.46,
+        "execution_and_correction": 10992.45,
+        "semantic_review": 13948.55,
+        "total": 25593.91
+      }
+    },
+    {
+      "id": "car_1_dev_02",
+      "db_id": "car_1",
+      "split": "dev",
+      "question": "How many countries does each continent have? List the continent id, continent name and the number of countries.",
+      "retrieved_tables": [
+        "countries",
+        "continents",
+        "car_makers",
+        "cars_data",
+        "model_list",
+        "car_names"
+      ],
+      "retrieved_table_count": 6,
+      "required_tables": [
+        "continents",
+        "countries"
+      ],
+      "retrieved_required_tables": [
+        "continents",
+        "countries"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 2265,
+      "context_words": 278,
+      "rag_example_count": 5,
+      "value_match_count": 0,
+      "generated_sql": "SELECT T1.Continent ,  count(*) FROM CONTINENTS AS T1 JOIN COUNTRIES AS T2 ON T1.ContId  =  T2.continent GROUP BY T1.Continent",
+      "corrected_sql": "SELECT T1.\"ContId\", T1.\"Continent\", count(*) FROM \"car_1\".\"continents\" AS T1 JOIN \"car_1\".\"countries\" AS T2 ON T1.\"ContId\" = T2.\"Continent\" GROUP BY T1.\"ContId\", T1.\"Continent\"",
+      "reviewed_sql": "SELECT T1.\"ContId\", T1.\"Continent\", count(*) FROM \"car_1\".\"continents\" AS T1 JOIN \"car_1\".\"countries\" AS T2 ON T1.\"ContId\" = T2.\"Continent\" GROUP BY T1.\"ContId\", T1.\"Continent\"",
+      "final_sql": "SELECT T1.\"ContId\", T1.\"Continent\", count(*) FROM \"car_1\".\"continents\" AS T1 JOIN \"car_1\".\"countries\" AS T2 ON T1.\"ContId\" = T2.\"Continent\" GROUP BY T1.\"ContId\", T1.\"Continent\"",
+      "gold_sql": "SELECT T1.ContId, T1.Continent, count(*) FROM CONTINENTS AS T1 JOIN COUNTRIES AS T2 ON T1.ContId = T2.Continent GROUP BY T1.ContId;",
+      "generated_result": [
+        [
+          2,
+          "europe",
+          6
+        ],
+        [
+          3,
+          "asia",
+          2
+        ],
+        [
+          5,
+          "australia",
+          2
+        ],
+        [
+          4,
+          "africa",
+          2
+        ],
+        [
+          1,
+          "america",
+          3
+        ]
+      ],
+      "gold_result": [
+        [
+          1,
+          "america",
+          3
+        ],
+        [
+          2,
+          "europe",
+          6
+        ],
+        [
+          3,
+          "asia",
+          2
+        ],
+        [
+          4,
+          "africa",
+          2
+        ],
+        [
+          5,
+          "australia",
+          2
+        ]
+      ],
+      "initial_error": "relation \"continents\" does not exist\nLINE 1: SELECT T1.Continent ,  count(*) FROM CONTINENTS AS T1 JOIN C...\n                                             ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 276.28,
+        "generation": 1242.3,
+        "execution_and_correction": 11114.96,
+        "semantic_review": 15214.64,
+        "total": 27849.17
+      }
+    },
+    {
+      "id": "car_1_dev_03",
+      "db_id": "car_1",
+      "split": "dev",
+      "question": "Which model of the car has the minimum horsepower?",
+      "retrieved_tables": [
+        "cars_data",
+        "model_list",
+        "car_names",
+        "car_makers",
+        "countries",
+        "continents"
+      ],
+      "retrieved_table_count": 6,
+      "required_tables": [
+        "car_names",
+        "cars_data"
+      ],
+      "retrieved_required_tables": [
+        "car_names",
+        "cars_data"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 2451,
+      "context_words": 320,
+      "rag_example_count": 5,
+      "value_match_count": 0,
+      "generated_sql": "SELECT T2.Model FROM CAR_NAMES AS T1 JOIN CARS_DATA AS T2 ON T1.MakeId  =  T2.Id WHERE T2.horsepower  =  (SELECT min(horsepower) FROM cars_data)",
+      "corrected_sql": "SELECT cn.\"Model\"\nFROM \"car_1\".\"car_names\" cn\nJOIN \"car_1\".\"cars_data\" cd ON cn.\"MakeId\" = cd.\"Id\"\nWHERE cd.\"Horsepower\" = (SELECT MIN(\"Horsepower\") FROM \"car_1\".\"cars_data\");",
+      "reviewed_sql": "SELECT cn.\"Model\"\nFROM \"car_1\".\"car_names\" cn\nJOIN \"car_1\".\"cars_data\" cd ON cn.\"MakeId\" = cd.\"Id\"\nORDER BY cd.\"Horsepower\" ASC\nLIMIT 1;",
+      "final_sql": "SELECT cn.\"Model\"\nFROM \"car_1\".\"car_names\" cn\nJOIN \"car_1\".\"cars_data\" cd ON cn.\"MakeId\" = cd.\"Id\"\nORDER BY cd.\"Horsepower\" ASC\nLIMIT 1;",
+      "gold_sql": "SELECT T1.Model FROM CAR_NAMES AS T1 JOIN CARS_DATA AS T2 ON T1.MakeId = T2.Id ORDER BY T2.horsepower ASC LIMIT 1;",
+      "generated_result": [
+        [
+          "amc"
+        ]
+      ],
+      "gold_result": [
+        [
+          "amc"
+        ]
+      ],
+      "initial_error": "relation \"car_names\" does not exist\nLINE 1: SELECT T2.Model FROM CAR_NAMES AS T1 JOIN CARS_DATA AS T2 ON...\n                             ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": true,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 169.39,
+        "generation": 1487.92,
+        "execution_and_correction": 11386.48,
+        "semantic_review": 12802.84,
+        "total": 25847.98
+      }
+    },
+    {
+      "id": "car_1_holdout_01",
+      "db_id": "car_1",
+      "split": "holdout",
+      "question": "Find the model of the car whose weight is below the average weight.",
+      "retrieved_tables": [
+        "cars_data",
+        "model_list",
+        "car_names",
+        "countries",
+        "car_makers",
+        "continents"
+      ],
+      "retrieved_table_count": 6,
+      "required_tables": [
+        "car_names",
+        "cars_data"
+      ],
+      "retrieved_required_tables": [
+        "car_names",
+        "cars_data"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 2126,
+      "context_words": 270,
+      "rag_example_count": 5,
+      "value_match_count": 0,
+      "generated_sql": "SELECT Model FROM car_names WHERE Weight  <  (SELECT avg(Weight) FROM cars_data)",
+      "corrected_sql": "SELECT cn.\"Model\"\nFROM \"car_1\".\"car_names\" cn\nJOIN \"car_1\".\"cars_data\" cd ON cn.\"MakeId\" = cd.\"Id\"\nWHERE cd.\"Weight\" < (SELECT avg(\"Weight\") FROM \"car_1\".\"cars_data\");",
+      "reviewed_sql": "SELECT cn.\"Model\"\nFROM \"car_1\".\"car_names\" cn\nJOIN \"car_1\".\"cars_data\" cd ON cn.\"MakeId\" = cd.\"Id\"\nWHERE cd.\"Weight\" < (SELECT avg(\"Weight\") FROM \"car_1\".\"cars_data\");",
+      "final_sql": "SELECT cn.\"Model\"\nFROM \"car_1\".\"car_names\" cn\nJOIN \"car_1\".\"cars_data\" cd ON cn.\"MakeId\" = cd.\"Id\"\nWHERE cd.\"Weight\" < (SELECT avg(\"Weight\") FROM \"car_1\".\"cars_data\");",
+      "gold_sql": "SELECT T1.model FROM CAR_NAMES AS T1 JOIN CARS_DATA AS T2 ON T1.MakeId = T2.Id WHERE T2.Weight < (SELECT avg(Weight) FROM CARS_DATA)",
+      "generated_result": [
+        [
+          "toyota"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "peugeot"
+        ],
+        [
+          "audi"
+        ],
+        [
+          "saab"
+        ],
+        [
+          "bmw"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "mercury"
+        ],
+        [
+          "opel"
+        ],
+        [
+          "peugeot"
+        ],
+        [
+          "fiat"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "volvo"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "peugeot"
+        ],
+        [
+          "renault"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "mercury"
+        ],
+        [
+          "fiat"
+        ],
+        [
+          "fiat"
+        ],
+        [
+          "opel"
+        ],
+        [
+          "audi"
+        ],
+        [
+          "volvo"
+        ],
+        [
+          "saab"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "audi"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "opel"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "fiat"
+        ],
+        [
+          "fiat"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "subaru"
+        ],
+        [
+          "fiat"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "pontiac"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "audi"
+        ],
+        [
+          "peugeot"
+        ],
+        [
+          "volvo"
+        ],
+        [
+          "saab"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "fiat"
+        ],
+        [
+          "opel"
+        ],
+        [
+          "capri"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "renault"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "buick"
+        ],
+        [
+          "renault"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "pontiac"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "subaru"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "bmw"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "oldsmobile"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "audi"
+        ],
+        [
+          "saab"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "fiat"
+        ],
+        [
+          "buick"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "oldsmobile"
+        ],
+        [
+          "pontiac"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "audi"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "audi"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "renault"
+        ],
+        [
+          "subaru"
+        ],
+        [
+          " volkswagen"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "triumph"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "buick"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "subaru"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "renault"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "saab"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "pontiac"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "pontiac"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "mercury"
+        ],
+        [
+          "nissan"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "buick"
+        ],
+        [
+          "chrysler"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "chevrolet"
+        ]
+      ],
+      "gold_result": [
+        [
+          "toyota"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "peugeot"
+        ],
+        [
+          "audi"
+        ],
+        [
+          "saab"
+        ],
+        [
+          "bmw"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "mercury"
+        ],
+        [
+          "opel"
+        ],
+        [
+          "peugeot"
+        ],
+        [
+          "fiat"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "volvo"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "peugeot"
+        ],
+        [
+          "renault"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "mercury"
+        ],
+        [
+          "fiat"
+        ],
+        [
+          "fiat"
+        ],
+        [
+          "opel"
+        ],
+        [
+          "audi"
+        ],
+        [
+          "volvo"
+        ],
+        [
+          "saab"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "audi"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "opel"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "fiat"
+        ],
+        [
+          "fiat"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "subaru"
+        ],
+        [
+          "fiat"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "pontiac"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "audi"
+        ],
+        [
+          "peugeot"
+        ],
+        [
+          "volvo"
+        ],
+        [
+          "saab"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "fiat"
+        ],
+        [
+          "opel"
+        ],
+        [
+          "capri"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "renault"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "buick"
+        ],
+        [
+          "renault"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "pontiac"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "subaru"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "bmw"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "oldsmobile"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "audi"
+        ],
+        [
+          "saab"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "amc"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "fiat"
+        ],
+        [
+          "buick"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "oldsmobile"
+        ],
+        [
+          "pontiac"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "audi"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "audi"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "renault"
+        ],
+        [
+          "subaru"
+        ],
+        [
+          " volkswagen"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "triumph"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "buick"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "subaru"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "renault"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "saab"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "pontiac"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "pontiac"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "mazda"
+        ],
+        [
+          "plymouth"
+        ],
+        [
+          "mercury"
+        ],
+        [
+          "nissan"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "honda"
+        ],
+        [
+          "datsun"
+        ],
+        [
+          "buick"
+        ],
+        [
+          "chrysler"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "toyota"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "chevrolet"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "volkswagen"
+        ],
+        [
+          "dodge"
+        ],
+        [
+          "ford"
+        ],
+        [
+          "chevrolet"
+        ]
+      ],
+      "initial_error": "relation \"car_names\" does not exist\nLINE 1: SELECT Model FROM car_names WHERE Weight  <  (SELECT avg(Wei...\n                          ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 217.66,
+        "generation": 756.21,
+        "execution_and_correction": 5264.91,
+        "semantic_review": 14602.46,
+        "total": 20844.51
+      }
+    },
+    {
+      "id": "employee_hire_evaluation_dev_01",
+      "db_id": "employee_hire_evaluation",
+      "split": "dev",
+      "question": "What is the number of employees from each city?",
+      "retrieved_tables": [
+        "employee",
+        "shop",
+        "hiring",
+        "evaluation"
+      ],
+      "retrieved_table_count": 4,
+      "required_tables": [
+        "employee"
+      ],
+      "retrieved_required_tables": [
+        "employee"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 1861,
+      "context_words": 211,
+      "rag_example_count": 5,
+      "value_match_count": 0,
+      "generated_sql": "SELECT count(*) ,  city FROM employee GROUP BY city",
+      "corrected_sql": "SELECT count(*) , \"City\" FROM \"employee_hire_evaluation\".\"employee\" GROUP BY \"City\"",
+      "reviewed_sql": "SELECT count(*) , \"City\" FROM \"employee_hire_evaluation\".\"employee\" GROUP BY \"City\"",
+      "final_sql": "SELECT count(*) , \"City\" FROM \"employee_hire_evaluation\".\"employee\" GROUP BY \"City\"",
+      "gold_sql": "SELECT count(*), city FROM employee GROUP BY city",
+      "generated_result": [
+        [
+          1,
+          "Leicester"
+        ],
+        [
+          2,
+          "Wasps"
+        ],
+        [
+          3,
+          "Bath"
+        ],
+        [
+          1,
+          "Sale"
+        ],
+        [
+          3,
+          "Bristol"
+        ]
+      ],
+      "gold_result": [
+        [
+          3,
+          "Bath"
+        ],
+        [
+          3,
+          "Bristol"
+        ],
+        [
+          1,
+          "Leicester"
+        ],
+        [
+          1,
+          "Sale"
+        ],
+        [
+          2,
+          "Wasps"
+        ]
+      ],
+      "initial_error": "relation \"employee\" does not exist\nLINE 1: SELECT count(*) ,  city FROM employee GROUP BY city\n                                     ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 119.05,
+        "generation": 527.05,
+        "execution_and_correction": 11220.13,
+        "semantic_review": 11982.57,
+        "total": 23850.19
+      }
+    },
+    {
+      "id": "employee_hire_evaluation_dev_02",
+      "db_id": "employee_hire_evaluation",
+      "split": "dev",
+      "question": "Find the name of the employee who got the highest one time bonus.",
+      "retrieved_tables": [
+        "employee",
+        "shop",
+        "hiring",
+        "evaluation"
+      ],
+      "retrieved_table_count": 4,
+      "required_tables": [
+        "employee",
+        "evaluation"
+      ],
+      "retrieved_required_tables": [
+        "employee",
+        "evaluation"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 2052,
+      "context_words": 232,
+      "rag_example_count": 5,
+      "value_match_count": 0,
+      "generated_sql": "SELECT name FROM employee WHERE Employee_ID = (SELECT Employee_ID FROM evaluation ORDER BY COUNT(*) DESC LIMIT 1)",
+      "corrected_sql": "SELECT e.\"Name\" FROM \"employee_hire_evaluation\".\"employee\" e WHERE e.\"Employee_ID\" = (SELECT ev.\"Employee_ID\" FROM \"employee_hire_evaluation\".\"evaluation\" ev ORDER BY ev.\"Bonus\" DESC LIMIT 1)",
+      "reviewed_sql": "SELECT e.\"Name\"\nFROM \"employee_hire_evaluation\".\"employee\" e\nWHERE e.\"Employee_ID\"::text = (\n    SELECT ev",
+      "final_sql": "SELECT e.\"Name\" FROM \"employee_hire_evaluation\".\"employee\" e WHERE e.\"Employee_ID\" = (SELECT ev.\"Employee_ID\" FROM \"employee_hire_evaluation\".\"evaluation\" ev ORDER BY ev.\"Bonus\" DESC LIMIT 1)",
+      "gold_sql": "SELECT t1.name FROM employee AS t1 JOIN evaluation AS t2 ON t1.Employee_ID = t2.Employee_ID ORDER BY t2.bonus DESC LIMIT 1",
+      "generated_result": [
+        [
+          "Louis Deacon"
+        ]
+      ],
+      "gold_result": [
+        [
+          "Louis Deacon"
+        ]
+      ],
+      "initial_error": "relation \"employee\" does not exist\nLINE 1: SELECT name FROM employee WHERE Employee_ID = (SELECT Employ...\n                         ^\n",
+      "review_error": "syntax error at end of input\nLINE 4:     SELECT ev\n                     ^\n",
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": true,
+      "semantic_review_success": false,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 84.57,
+        "generation": 821.97,
+        "execution_and_correction": 9293.37,
+        "semantic_review": 11949.47,
+        "total": 22150.4
+      }
+    },
+    {
+      "id": "employee_hire_evaluation_dev_03",
+      "db_id": "employee_hire_evaluation",
+      "split": "dev",
+      "question": "Which cities do more than one employee under age 30 come from?",
+      "retrieved_tables": [
+        "employee",
+        "shop",
+        "hiring",
+        "evaluation"
+      ],
+      "retrieved_table_count": 4,
+      "required_tables": [
+        "employee"
+      ],
+      "retrieved_required_tables": [
+        "employee"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 1906,
+      "context_words": 222,
+      "rag_example_count": 5,
+      "value_match_count": 0,
+      "generated_sql": "SELECT city FROM employee WHERE age  >  30 GROUP BY city HAVING count(*)  >  1",
+      "corrected_sql": "SELECT \"City\" FROM \"employee_hire_evaluation\".\"employee\" WHERE \"Age\" < 30 GROUP BY \"City\" HAVING count(*) > 1;",
+      "reviewed_sql": "SELECT \"City\" FROM \"employee_hire_evaluation\".\"employee\" WHERE \"Age\" < 30 GROUP BY \"City\" HAVING count(*) > 1;",
+      "final_sql": "SELECT \"City\" FROM \"employee_hire_evaluation\".\"employee\" WHERE \"Age\" < 30 GROUP BY \"City\" HAVING count(*) > 1;",
+      "gold_sql": "SELECT city FROM employee WHERE age < 30 GROUP BY city HAVING count(*) > 1",
+      "generated_result": [
+        [
+          "Bath"
+        ]
+      ],
+      "gold_result": [
+        [
+          "Bath"
+        ]
+      ],
+      "initial_error": "relation \"employee\" does not exist\nLINE 1: SELECT city FROM employee WHERE age  >  30 GROUP BY city HAV...\n                         ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 94.53,
+        "generation": 786.48,
+        "execution_and_correction": 5891.31,
+        "semantic_review": 13047.67,
+        "total": 19821.43
+      }
+    },
+    {
+      "id": "employee_hire_evaluation_holdout_01",
+      "db_id": "employee_hire_evaluation",
+      "split": "holdout",
+      "question": "Find the names of stores whose number products is more than the average number of products.",
+      "retrieved_tables": [
+        "employee",
+        "shop",
+        "hiring",
+        "evaluation"
+      ],
+      "retrieved_table_count": 4,
+      "required_tables": [
+        "shop"
+      ],
+      "retrieved_required_tables": [
+        "shop"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 2100,
+      "context_words": 238,
+      "rag_example_count": 5,
+      "value_match_count": 0,
+      "generated_sql": "SELECT name FROM shop WHERE number_products  >  (SELECT avg(number_products) FROM shop)",
+      "corrected_sql": "SELECT \"Name\" FROM \"employee_hire_evaluation\".\"shop\" WHERE \"Number_products\" > (SELECT avg(\"Number_products\") FROM \"employee_hire_evaluation\".\"shop\");",
+      "reviewed_sql": "SELECT \"Name\" FROM \"employee_hire_evaluation\".\"shop\" WHERE \"Number_products\" > (SELECT avg(\"Number_products\") FROM \"employee_hire_evaluation\".\"shop\");",
+      "final_sql": "SELECT \"Name\" FROM \"employee_hire_evaluation\".\"shop\" WHERE \"Number_products\" > (SELECT avg(\"Number_products\") FROM \"employee_hire_evaluation\".\"shop\");",
+      "gold_sql": "SELECT name FROM shop WHERE number_products > (SELECT avg(number_products) FROM shop)",
+      "generated_result": [
+        [
+          "HJK"
+        ],
+        [
+          "FC Inter"
+        ],
+        [
+          "FC Lahti"
+        ]
+      ],
+      "gold_result": [
+        [
+          "HJK"
+        ],
+        [
+          "FC Inter"
+        ],
+        [
+          "FC Lahti"
+        ]
+      ],
+      "initial_error": "relation \"shop\" does not exist\nLINE 1: SELECT name FROM shop WHERE number_products  >  (SELECT avg(...\n                         ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 104.05,
+        "generation": 793.55,
+        "execution_and_correction": 982.93,
+        "semantic_review": 14085.26,
+        "total": 15967.11
+      }
+    },
+    {
+      "id": "world_1_dev_01",
+      "db_id": "world_1",
+      "split": "dev",
+      "question": "What are the names of all the countries that became independent after 1950?",
+      "retrieved_tables": [
+        "city",
+        "sqlite_sequence",
+        "country",
+        "countrylanguage"
+      ],
+      "retrieved_table_count": 4,
+      "required_tables": [
+        "country"
+      ],
+      "retrieved_required_tables": [
+        "country"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 2017,
+      "context_words": 246,
+      "rag_example_count": 5,
+      "value_match_count": 3,
+      "generated_sql": "SELECT Name FROM country WHERE IndepYear > 1950",
+      "corrected_sql": "SELECT \"Name\" FROM \"world_1\".\"country\" WHERE \"IndepYear\" > 1950;",
+      "reviewed_sql": "SELECT \"Name\" FROM \"world_1\".\"country\" WHERE \"IndepYear\" > 1950;",
+      "final_sql": "SELECT \"Name\" FROM \"world_1\".\"country\" WHERE \"IndepYear\" > 1950;",
+      "gold_sql": "SELECT Name FROM country WHERE IndepYear > 1950",
+      "generated_result": [
+        [
+          "Angola"
+        ],
+        [
+          "United Arab Emirates"
+        ],
+        [
+          "Armenia"
+        ],
+        [
+          "Antigua and Barbuda"
+        ],
+        [
+          "Azerbaijan"
+        ],
+        [
+          "Burundi"
+        ],
+        [
+          "Benin"
+        ],
+        [
+          "Burkina Faso"
+        ],
+        [
+          "Bangladesh"
+        ],
+        [
+          "Bahrain"
+        ],
+        [
+          "Bahamas"
+        ],
+        [
+          "Bosnia and Herzegovina"
+        ],
+        [
+          "Belarus"
+        ],
+        [
+          "Belize"
+        ],
+        [
+          "Barbados"
+        ],
+        [
+          "Brunei"
+        ],
+        [
+          "Botswana"
+        ],
+        [
+          "Central African Republic"
+        ],
+        [
+          "C\u00f4te d\u2019Ivoire"
+        ],
+        [
+          "Cameroon"
+        ],
+        [
+          "Congo, The Democratic Republic of the"
+        ],
+        [
+          "Congo"
+        ],
+        [
+          "Comoros"
+        ],
+        [
+          "Cape Verde"
+        ],
+        [
+          "Cyprus"
+        ],
+        [
+          "Czech Republic"
+        ],
+        [
+          "Germany"
+        ],
+        [
+          "Djibouti"
+        ],
+        [
+          "Dominica"
+        ],
+        [
+          "Algeria"
+        ],
+        [
+          "Eritrea"
+        ],
+        [
+          "Estonia"
+        ],
+        [
+          "Fiji Islands"
+        ],
+        [
+          "Micronesia, Federated States of"
+        ],
+        [
+          "Gabon"
+        ],
+        [
+          "Georgia"
+        ],
+        [
+          "Ghana"
+        ],
+        [
+          "Guinea"
+        ],
+        [
+          "Gambia"
+        ],
+        [
+          "Guinea-Bissau"
+        ],
+        [
+          "Equatorial Guinea"
+        ],
+        [
+          "Grenada"
+        ],
+        [
+          "Guyana"
+        ],
+        [
+          "Croatia"
+        ],
+        [
+          "Jamaica"
+        ],
+        [
+          "Kazakstan"
+        ],
+        [
+          "Kenya"
+        ],
+        [
+          "Kyrgyzstan"
+        ],
+        [
+          "Cambodia"
+        ],
+        [
+          "Kiribati"
+        ],
+        [
+          "Saint Kitts and Nevis"
+        ],
+        [
+          "Kuwait"
+        ],
+        [
+          "Laos"
+        ],
+        [
+          "Libyan Arab Jamahiriya"
+        ],
+        [
+          "Saint Lucia"
+        ],
+        [
+          "Lesotho"
+        ],
+        [
+          "Lithuania"
+        ],
+        [
+          "Latvia"
+        ],
+        [
+          "Morocco"
+        ],
+        [
+          "Moldova"
+        ],
+        [
+          "Madagascar"
+        ],
+        [
+          "Maldives"
+        ],
+        [
+          "Marshall Islands"
+        ],
+        [
+          "Macedonia"
+        ],
+        [
+          "Mali"
+        ],
+        [
+          "Malta"
+        ],
+        [
+          "Mozambique"
+        ],
+        [
+          "Mauritania"
+        ],
+        [
+          "Mauritius"
+        ],
+        [
+          "Malawi"
+        ],
+        [
+          "Malaysia"
+        ],
+        [
+          "Namibia"
+        ],
+        [
+          "Niger"
+        ],
+        [
+          "Nigeria"
+        ],
+        [
+          "Nauru"
+        ],
+        [
+          "Oman"
+        ],
+        [
+          "Palau"
+        ],
+        [
+          "Papua New Guinea"
+        ],
+        [
+          "Qatar"
+        ],
+        [
+          "Russian Federation"
+        ],
+        [
+          "Rwanda"
+        ],
+        [
+          "Sudan"
+        ],
+        [
+          "Senegal"
+        ],
+        [
+          "Singapore"
+        ],
+        [
+          "Solomon Islands"
+        ],
+        [
+          "Sierra Leone"
+        ],
+        [
+          "Somalia"
+        ],
+        [
+          "Sao Tome and Principe"
+        ],
+        [
+          "Suriname"
+        ],
+        [
+          "Slovakia"
+        ],
+        [
+          "Slovenia"
+        ],
+        [
+          "Swaziland"
+        ],
+        [
+          "Seychelles"
+        ],
+        [
+          "Chad"
+        ],
+        [
+          "Togo"
+        ],
+        [
+          "Tajikistan"
+        ],
+        [
+          "Turkmenistan"
+        ],
+        [
+          "Tonga"
+        ],
+        [
+          "Trinidad and Tobago"
+        ],
+        [
+          "Tunisia"
+        ],
+        [
+          "Tuvalu"
+        ],
+        [
+          "Tanzania"
+        ],
+        [
+          "Uganda"
+        ],
+        [
+          "Ukraine"
+        ],
+        [
+          "Uzbekistan"
+        ],
+        [
+          "Saint Vincent and the Grenadines"
+        ],
+        [
+          "Vanuatu"
+        ],
+        [
+          "Samoa"
+        ],
+        [
+          "Zambia"
+        ],
+        [
+          "Zimbabwe"
+        ]
+      ],
+      "gold_result": [
+        [
+          "Angola"
+        ],
+        [
+          "United Arab Emirates"
+        ],
+        [
+          "Armenia"
+        ],
+        [
+          "Antigua and Barbuda"
+        ],
+        [
+          "Azerbaijan"
+        ],
+        [
+          "Burundi"
+        ],
+        [
+          "Benin"
+        ],
+        [
+          "Burkina Faso"
+        ],
+        [
+          "Bangladesh"
+        ],
+        [
+          "Bahrain"
+        ],
+        [
+          "Bahamas"
+        ],
+        [
+          "Bosnia and Herzegovina"
+        ],
+        [
+          "Belarus"
+        ],
+        [
+          "Belize"
+        ],
+        [
+          "Barbados"
+        ],
+        [
+          "Brunei"
+        ],
+        [
+          "Botswana"
+        ],
+        [
+          "Central African Republic"
+        ],
+        [
+          "C\u00f4te d\u2019Ivoire"
+        ],
+        [
+          "Cameroon"
+        ],
+        [
+          "Congo, The Democratic Republic of the"
+        ],
+        [
+          "Congo"
+        ],
+        [
+          "Comoros"
+        ],
+        [
+          "Cape Verde"
+        ],
+        [
+          "Cyprus"
+        ],
+        [
+          "Czech Republic"
+        ],
+        [
+          "Germany"
+        ],
+        [
+          "Djibouti"
+        ],
+        [
+          "Dominica"
+        ],
+        [
+          "Algeria"
+        ],
+        [
+          "Eritrea"
+        ],
+        [
+          "Estonia"
+        ],
+        [
+          "Fiji Islands"
+        ],
+        [
+          "Micronesia, Federated States of"
+        ],
+        [
+          "Gabon"
+        ],
+        [
+          "Georgia"
+        ],
+        [
+          "Ghana"
+        ],
+        [
+          "Guinea"
+        ],
+        [
+          "Gambia"
+        ],
+        [
+          "Guinea-Bissau"
+        ],
+        [
+          "Equatorial Guinea"
+        ],
+        [
+          "Grenada"
+        ],
+        [
+          "Guyana"
+        ],
+        [
+          "Croatia"
+        ],
+        [
+          "Jamaica"
+        ],
+        [
+          "Kazakstan"
+        ],
+        [
+          "Kenya"
+        ],
+        [
+          "Kyrgyzstan"
+        ],
+        [
+          "Cambodia"
+        ],
+        [
+          "Kiribati"
+        ],
+        [
+          "Saint Kitts and Nevis"
+        ],
+        [
+          "Kuwait"
+        ],
+        [
+          "Laos"
+        ],
+        [
+          "Libyan Arab Jamahiriya"
+        ],
+        [
+          "Saint Lucia"
+        ],
+        [
+          "Lesotho"
+        ],
+        [
+          "Lithuania"
+        ],
+        [
+          "Latvia"
+        ],
+        [
+          "Morocco"
+        ],
+        [
+          "Moldova"
+        ],
+        [
+          "Madagascar"
+        ],
+        [
+          "Maldives"
+        ],
+        [
+          "Marshall Islands"
+        ],
+        [
+          "Macedonia"
+        ],
+        [
+          "Mali"
+        ],
+        [
+          "Malta"
+        ],
+        [
+          "Mozambique"
+        ],
+        [
+          "Mauritania"
+        ],
+        [
+          "Mauritius"
+        ],
+        [
+          "Malawi"
+        ],
+        [
+          "Malaysia"
+        ],
+        [
+          "Namibia"
+        ],
+        [
+          "Niger"
+        ],
+        [
+          "Nigeria"
+        ],
+        [
+          "Nauru"
+        ],
+        [
+          "Oman"
+        ],
+        [
+          "Palau"
+        ],
+        [
+          "Papua New Guinea"
+        ],
+        [
+          "Qatar"
+        ],
+        [
+          "Russian Federation"
+        ],
+        [
+          "Rwanda"
+        ],
+        [
+          "Sudan"
+        ],
+        [
+          "Senegal"
+        ],
+        [
+          "Singapore"
+        ],
+        [
+          "Solomon Islands"
+        ],
+        [
+          "Sierra Leone"
+        ],
+        [
+          "Somalia"
+        ],
+        [
+          "Sao Tome and Principe"
+        ],
+        [
+          "Suriname"
+        ],
+        [
+          "Slovakia"
+        ],
+        [
+          "Slovenia"
+        ],
+        [
+          "Swaziland"
+        ],
+        [
+          "Seychelles"
+        ],
+        [
+          "Chad"
+        ],
+        [
+          "Togo"
+        ],
+        [
+          "Tajikistan"
+        ],
+        [
+          "Turkmenistan"
+        ],
+        [
+          "Tonga"
+        ],
+        [
+          "Trinidad and Tobago"
+        ],
+        [
+          "Tunisia"
+        ],
+        [
+          "Tuvalu"
+        ],
+        [
+          "Tanzania"
+        ],
+        [
+          "Uganda"
+        ],
+        [
+          "Ukraine"
+        ],
+        [
+          "Uzbekistan"
+        ],
+        [
+          "Saint Vincent and the Grenadines"
+        ],
+        [
+          "Vanuatu"
+        ],
+        [
+          "Samoa"
+        ],
+        [
+          "Zambia"
+        ],
+        [
+          "Zimbabwe"
+        ]
+      ],
+      "initial_error": "relation \"country\" does not exist\nLINE 1: SELECT Name FROM country WHERE IndepYear > 1950\n                         ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 506.71,
+        "generation": 572.63,
+        "execution_and_correction": 13080.91,
+        "semantic_review": 13171.61,
+        "total": 27334.09
+      }
+    },
+    {
+      "id": "world_1_dev_02",
+      "db_id": "world_1",
+      "split": "dev",
+      "question": "Which region is the city Kabul located in?",
+      "retrieved_tables": [
+        "city",
+        "sqlite_sequence",
+        "country",
+        "countrylanguage"
+      ],
+      "retrieved_table_count": 4,
+      "required_tables": [
+        "city",
+        "country"
+      ],
+      "retrieved_required_tables": [
+        "city",
+        "country"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 2252,
+      "context_words": 286,
+      "rag_example_count": 5,
+      "value_match_count": 3,
+      "generated_sql": "SELECT Region FROM city WHERE Name  =  \"Kabul\"",
+      "corrected_sql": "SELECT c.\"Region\"\nFROM \"world_1\".\"city\" ci\nJOIN \"world_1\".\"country\" c ON ci.\"CountryCode\" = c.\"Code\"\nWHERE ci.\"Name\" = 'Kabul';",
+      "reviewed_sql": "SELECT c.\"Region\"\nFROM \"world_1\".\"city\" ci\nJOIN \"world_1\".\"country\" c ON ci.\"CountryCode\" = c.\"Code\"\nWHERE ci.\"Name\" = 'Kabul';",
+      "final_sql": "SELECT c.\"Region\"\nFROM \"world_1\".\"city\" ci\nJOIN \"world_1\".\"country\" c ON ci.\"CountryCode\" = c.\"Code\"\nWHERE ci.\"Name\" = 'Kabul';",
+      "gold_sql": "SELECT Region FROM country AS T1 JOIN city AS T2 ON T1.Code = T2.CountryCode WHERE T2.Name = \"Kabul\"",
+      "generated_result": [
+        [
+          "Southern and Central Asia"
+        ]
+      ],
+      "gold_result": [
+        [
+          "Southern and Central Asia"
+        ]
+      ],
+      "initial_error": "relation \"city\" does not exist\nLINE 1: SELECT Region FROM city WHERE Name  =  \"Kabul\"\n                           ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 335.06,
+        "generation": 615.47,
+        "execution_and_correction": 4296.67,
+        "semantic_review": 19931.31,
+        "total": 25181.07
+      }
+    },
+    {
+      "id": "world_1_dev_03",
+      "db_id": "world_1",
+      "split": "dev",
+      "question": "What is name of the country that speaks the largest number of languages?",
+      "retrieved_tables": [
+        "city",
+        "sqlite_sequence",
+        "country",
+        "countrylanguage"
+      ],
+      "retrieved_table_count": 4,
+      "required_tables": [
+        "country",
+        "countrylanguage"
+      ],
+      "retrieved_required_tables": [
+        "country",
+        "countrylanguage"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 2220,
+      "context_words": 284,
+      "rag_example_count": 5,
+      "value_match_count": 1,
+      "generated_sql": "SELECT Name FROM countrylanguage GROUP BY Language ORDER BY count(*) DESC LIMIT 1",
+      "corrected_sql": "SELECT c.\"Name\" FROM \"world_1\".\"country\" c JOIN \"world_1\".\"countrylanguage\" cl ON c.\"Code\" = cl.\"CountryCode\" GROUP BY c.\"Name\" ORDER BY COUNT(*) DESC LIMIT 1",
+      "reviewed_sql": "SELECT c.\"Name\" FROM \"world_1\".\"country\" c JOIN \"world_1\".\"countrylanguage\" cl ON c.\"Code\" = cl.\"CountryCode\" GROUP BY c.\"Name\" ORDER BY COUNT(*) DESC LIMIT 1",
+      "final_sql": "SELECT c.\"Name\" FROM \"world_1\".\"country\" c JOIN \"world_1\".\"countrylanguage\" cl ON c.\"Code\" = cl.\"CountryCode\" GROUP BY c.\"Name\" ORDER BY COUNT(*) DESC LIMIT 1",
+      "gold_sql": "SELECT T1.Name FROM country AS T1 JOIN countrylanguage AS T2 ON T1.Code = T2.CountryCode GROUP BY T1.Name ORDER BY COUNT(*) DESC LIMIT 1",
+      "generated_result": [
+        [
+          "China"
+        ]
+      ],
+      "gold_result": [
+        [
+          "United States"
+        ]
+      ],
+      "initial_error": "relation \"countrylanguage\" does not exist\nLINE 1: SELECT Name FROM countrylanguage GROUP BY Language ORDER BY ...\n                         ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": false,
+      "semantic_correct": true,
+      "tie_accepted": true,
+      "latency_ms": {
+        "retrieval": 480.17,
+        "generation": 674.96,
+        "execution_and_correction": 4402.97,
+        "semantic_review": 15114.9,
+        "total": 20712.19
+      }
+    },
+    {
+      "id": "world_1_holdout_01",
+      "db_id": "world_1",
+      "split": "holdout",
+      "question": "How many countries speak both English and Dutch?",
+      "retrieved_tables": [
+        "city",
+        "sqlite_sequence",
+        "country",
+        "countrylanguage"
+      ],
+      "retrieved_table_count": 4,
+      "required_tables": [
+        "country",
+        "countrylanguage"
+      ],
+      "retrieved_required_tables": [
+        "country",
+        "countrylanguage"
+      ],
+      "missing_required_tables": [],
+      "required_table_recall": 100.0,
+      "context_characters": 2736,
+      "context_words": 351,
+      "rag_example_count": 5,
+      "value_match_count": 4,
+      "generated_sql": "SELECT COUNT(T1.Code) FROM country AS T1 JOIN countrylanguage AS T2 ON T1.Code  =  T2.CountryCode WHERE T2.Language  =  \"English\" INTERSECT SELECT COUNT(T1.Code) FROM country AS T1 JOIN countrylanguage AS T2 ON T1.Code  =  T2.CountryCode WHERE T2.Language  =  \"French\"",
+      "corrected_sql": "SELECT COUNT(*) FROM (\n    SELECT \"CountryCode\" FROM \"world_1\".\"countrylanguage\" WHERE \"Language\" = 'English'\n    INTERSECT\n    SELECT \"CountryCode\" FROM \"world_1\".\"countrylanguage\" WHERE \"Language\" = 'Dutch'\n) AS sub;",
+      "reviewed_sql": "SELECT COUNT(*) FROM (\n    SELECT \"CountryCode\" FROM \"world_1\".\"countrylanguage\" WHERE \"Language\" = 'English'\n    INTERSECT\n    SELECT \"CountryCode\" FROM \"world_1\".\"countrylanguage\" WHERE \"Language\" = 'Dutch'\n) AS sub;",
+      "final_sql": "SELECT COUNT(*) FROM (\n    SELECT \"CountryCode\" FROM \"world_1\".\"countrylanguage\" WHERE \"Language\" = 'English'\n    INTERSECT\n    SELECT \"CountryCode\" FROM \"world_1\".\"countrylanguage\" WHERE \"Language\" = 'Dutch'\n) AS sub;",
+      "gold_sql": "SELECT COUNT(*) FROM (SELECT T1.Name FROM country AS T1 JOIN countrylanguage AS T2 ON T1.Code = T2.CountryCode WHERE T2.Language = \"English\" INTERSECT SELECT T1.Name FROM country AS T1 JOIN countrylanguage AS T2 ON T1.Code = T2.CountryCode WHERE T2.Language = \"Dutch\")",
+      "generated_result": [
+        [
+          3
+        ]
+      ],
+      "gold_result": [
+        [
+          3
+        ]
+      ],
+      "initial_error": "relation \"country\" does not exist\nLINE 1: SELECT COUNT(T1.Code) FROM country AS T1 JOIN countrylanguag...\n                                   ^\n",
+      "review_error": null,
+      "error": null,
+      "correction_used": true,
+      "correction_success": true,
+      "semantic_review_used": true,
+      "semantic_review_changed": false,
+      "semantic_review_success": true,
+      "strict_correct": true,
+      "semantic_correct": true,
+      "tie_accepted": false,
+      "latency_ms": {
+        "retrieval": 342.03,
+        "generation": 2143.89,
+        "execution_and_correction": 7743.78,
+        "semantic_review": 12253.35,
+        "total": 22485.38
+      }
+    }
+  ]
+}
