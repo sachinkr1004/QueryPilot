@@ -42,6 +42,12 @@ TEST_SET_PATH = (
     / "test_set.json"
 )
 
+FINAL_TEST_MANIFEST_PATH = (
+    BASE_DIR
+    / "phase8"
+    / "final_test_manifest.json"
+)
+
 RESULTS_DIR = (
     BASE_DIR
     / "phase8"
@@ -50,16 +56,51 @@ RESULTS_DIR = (
 
 
 # ============================================================
-# LOAD ABLATION BENCHMARK
+# LOAD BENCHMARK
 # ============================================================
 
-def load_ablation_cases():
+def load_benchmark_cases(benchmark):
 
-    with TEST_SET_PATH.open(
-        "r",
-        encoding="utf-8",
-    ) as file:
-        return json.load(file)
+    if benchmark == "ablation":
+
+        with TEST_SET_PATH.open(
+            "r",
+            encoding="utf-8",
+        ) as file:
+            return json.load(file)
+
+    if benchmark == "final":
+
+        with FINAL_TEST_MANIFEST_PATH.open(
+            "r",
+            encoding="utf-8",
+        ) as file:
+            manifest = json.load(file)
+
+        if manifest.get("status") != "frozen_not_evaluated":
+            raise ValueError(
+                "Final test manifest is not frozen_not_evaluated. "
+                "Refusing to evaluate."
+            )
+
+        if manifest.get("results_inspected") is not False:
+            raise ValueError(
+                "Final test manifest results_inspected is not False. "
+                "Refusing to evaluate."
+            )
+
+        cases = manifest.get("records")
+
+        if not cases:
+            raise ValueError(
+                "Final test manifest contains no records."
+            )
+
+        return cases
+
+    raise ValueError(
+        f"Unknown benchmark: {benchmark}"
+    )
 
 
 # ============================================================
@@ -674,7 +715,9 @@ def run_experiment(
     one=False,
     resume=False,
 ):
-    cases = load_ablation_cases()
+    cases = load_benchmark_cases(
+        config["benchmark"]
+    )
 
     if one:
         cases = cases[:1]
@@ -705,6 +748,17 @@ def run_experiment(
         checkpoint_config = checkpoint.get(
             "config"
         )
+
+        checkpoint_benchmark = checkpoint.get(
+            "benchmark"
+        )
+
+        if checkpoint_benchmark != config["benchmark"]:
+            raise ValueError(
+                "Checkpoint benchmark does not match "
+                "the current benchmark. "
+                "Refusing to mix benchmark runs."
+            )
 
         if checkpoint_config != config:
             raise ValueError(
@@ -834,7 +888,7 @@ def run_experiment(
         checkpoint_output = {
             "phase": "8.2",
             "experiment_id": experiment_id,
-            "benchmark": "phase7_consumed_20",
+            "benchmark": config["benchmark"],
             "config": config,
             "completed": len(results),
             "total": len(cases),
@@ -911,6 +965,20 @@ def main():
     )
 
     parser.add_argument(
+        "--benchmark",
+        choices=[
+            "ablation",
+            "final",
+        ],
+        default="ablation",
+        help=(
+            "Benchmark to evaluate. "
+            "ablation uses the existing 20-question benchmark; "
+            "final uses the frozen final-test manifest."
+        ),
+    )
+
+    parser.add_argument(
         "--generator",
         choices=[
             "phase8_baseline",
@@ -984,7 +1052,14 @@ def main():
 
     args = parser.parse_args()
 
+    if args.benchmark == "final" and args.one:
+        parser.error(
+            "--one is not allowed with --benchmark final. "
+            "The untouched final test must be evaluated as the full frozen benchmark."
+        )
+
     config = {
+        "benchmark": args.benchmark,
         "generator": args.generator,
         "top_k": args.top_k,
         "fk_expansion": (
@@ -1045,9 +1120,7 @@ def main():
             "experiment_id": (
                 args.experiment_id
             ),
-            "benchmark": (
-                "phase7_consumed_20"
-            ),
+            "benchmark": config["benchmark"],
             "config": config,
             "summary": summary,
             "results": results,
@@ -1067,6 +1140,50 @@ def main():
             "Results saved:",
             output_path,
         )
+
+        if config["benchmark"] == "final":
+
+            manifest = json.loads(
+                FINAL_TEST_MANIFEST_PATH.read_text(
+                    encoding="utf-8",
+                )
+            )
+
+            if manifest.get("status") != "frozen_not_evaluated":
+                raise ValueError(
+                    "Final test manifest changed unexpectedly "
+                    "before final-run completion."
+                )
+
+            manifest["status"] = "evaluated_not_inspected"
+            manifest["results_inspected"] = False
+            manifest["evaluation_experiment_id"] = (
+                args.experiment_id
+            )
+            manifest["result_file"] = output_path.name
+
+            manifest_temp_path = (
+                FINAL_TEST_MANIFEST_PATH.with_suffix(
+                    ".json.tmp"
+                )
+            )
+
+            manifest_temp_path.write_text(
+                json.dumps(
+                    manifest,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+            manifest_temp_path.replace(
+                FINAL_TEST_MANIFEST_PATH
+            )
+
+            print(
+                "Final-test manifest locked:",
+                FINAL_TEST_MANIFEST_PATH,
+            )
 
         # Remove checkpoint only after the final
         # experiment result has been saved safely.
