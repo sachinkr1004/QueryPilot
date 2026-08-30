@@ -1,0 +1,124 @@
+{
+  "phase": "8.10",
+  "status": "frozen_before_final_test",
+  "selection_basis": "Phase 8 controlled ablations and model comparison on the frozen 20-question development/holdout benchmark",
+
+  "final_configuration": {
+    "generator": "baseline",
+    "generator_model": "openai/gpt-oss-120b",
+    "top_k": 7,
+    "fk_expansion": false,
+    "fk_hops": 2,
+    "value_grounding": true,
+    "rag_examples": true,
+    "rag_limit": 5,
+    "self_correction": true,
+    "semantic_review": true
+  },
+
+  "selection_evidence": {
+    "primary_experiment": "phase8_fk_off_deterministic",
+    "strict_execution_accuracy": 95.0,
+    "semantic_accuracy": 100.0,
+    "execution_success_rate": 100.0,
+    "mean_latency_ms": 17175.70,
+
+    "ablation_observations": {
+      "reference_k7": {
+        "strict": 85.0,
+        "semantic": 90.0,
+        "execution": 100.0
+      },
+      "top_k_5": {
+        "strict": 95.0,
+        "semantic": 100.0,
+        "execution": 100.0
+      },
+      "fk_expansion_off": {
+        "strict": 95.0,
+        "semantic": 100.0,
+        "execution": 100.0
+      },
+      "combined_k5_fk_off": {
+        "strict": 90.0,
+        "semantic": 95.0,
+        "execution": 100.0
+      },
+      "value_grounding_off": {
+        "strict": 80.0,
+        "semantic": 90.0,
+        "execution": 100.0
+      },
+      "rag_examples_off": {
+        "strict": 80.0,
+        "semantic": 90.0,
+        "execution": 100.0
+      },
+      "self_correction_off": {
+        "strict": 85.0,
+        "semantic": 90.0,
+        "execution": 95.0
+      },
+      "semantic_review_off": {
+        "strict": 75.0,
+        "semantic": 85.0,
+        "execution": 100.0
+      }
+    },
+
+    "model_comparison": {
+      "gpt_oss_raw": {
+        "strict": 90.0,
+        "semantic": 95.0,
+        "execution": 100.0
+      },
+      "base_qwen_raw": {
+        "strict": 0.0,
+        "semantic": 0.0,
+        "execution": 0.0
+      },
+      "qwen_lora_raw": {
+        "strict": 55.0,
+        "semantic": 60.0,
+        "execution": 70.0
+      },
+      "gpt_oss_full": {
+        "strict": 95.0,
+        "semantic": 100.0,
+        "execution": 100.0
+      },
+      "base_qwen_full_hybrid": {
+        "strict": 95.0,
+        "semantic": 100.0,
+        "execution": 100.0
+      },
+      "qwen_lora_full_hybrid": {
+        "strict": 80.0,
+        "semantic": 85.0,
+        "execution": 95.0
+      }
+    }
+  },
+
+  "selection_reason": [
+    "GPT-OSS was the strongest raw generator on the frozen Phase 8 comparison benchmark.",
+    "K7 with FK expansion disabled achieved 95% strict accuracy, 100% semantic accuracy, and 100% execution success.",
+    "The combined K5 plus FK-off candidate did not preserve the individual ablation gains.",
+    "Value grounding and RAG examples were retained because disabling either reduced accuracy.",
+    "Self-correction was retained because disabling it reduced execution reliability.",
+    "Semantic review was retained because disabling it produced a substantial semantic accuracy decrease.",
+    "Base Qwen FULL and Qwen LoRA FULL are hybrid pipelines that use GPT-OSS correction and semantic review and therefore are not treated as pure local-model results."
+  ],
+
+  "benchmark_scope": {
+    "selection_questions": 20,
+    "selection_set_role": "configuration_selection_only",
+    "untouched_final_test_used_for_selection": false
+  },
+
+  "freeze_policy": {
+    "configuration_locked_before_final_test": true,
+    "no_configuration_tuning_on_final_test": true,
+    "final_test_manifest_must_remain_unread_until_phase_8_11": true
+  }
+}
