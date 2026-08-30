@@ -27,6 +27,11 @@ TABLES_PATH = (
     / "tables.json"
 )
 
+TEST_TABLES_PATH = (
+    SPIDER_ROOT
+    / "test_tables.json"
+)
+
 DATABASE_ROOT = (
     SPIDER_ROOT
     / "database"
@@ -39,19 +44,29 @@ DATABASE_ROOT = (
 
 @lru_cache(maxsize=1)
 def load_spider_schema_map():
-    """
-    Load tables.json once and return:
 
+    """
+    Load Spider train/dev and test schema metadata once.
+
+    Returns:
         {
             db_id: schema_record
         }
     """
 
-    with TABLES_PATH.open(
-        "r",
-        encoding="utf-8",
-    ) as file:
-        records = json.load(file)
+    records = []
+
+    for path in [
+        TABLES_PATH,
+        TEST_TABLES_PATH,
+    ]:
+        with path.open(
+            "r",
+            encoding="utf-8",
+        ) as file:
+            records.extend(
+                json.load(file)
+            )
 
     return {
         record["db_id"]: record
