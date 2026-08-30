@@ -379,7 +379,10 @@ def evaluate_one(
     return {
         "id": test_id,
         "db_id": db_id,
-        "split": test_case["split"],
+        "split": test_case.get(
+            "split",
+            test_case.get("source", "final"),
+        ),
         "question": question,
 
         "retrieved_tables": (
