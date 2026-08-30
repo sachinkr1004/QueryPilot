@@ -38,6 +38,12 @@ DATABASE_ROOT = (
 )
 
 
+
+TEST_DATABASE_ROOT = (
+    SPIDER_ROOT
+    / "test_database"
+)
+
 # ============================================================
 # LOAD SPIDER SCHEMA METADATA
 # ============================================================
@@ -356,21 +362,33 @@ def get_sqlite_database_path(
 ):
     """
     Return the SQLite database path for one Spider DB.
+
+    Prefer the standard train/dev database directory.
+    Fall back to the Spider test database directory.
     """
 
-    path = (
-        DATABASE_ROOT
-        / database_name
-        / f"{database_name}.sqlite"
+    candidate_paths = [
+        (
+            DATABASE_ROOT
+            / database_name
+            / f"{database_name}.sqlite"
+        ),
+        (
+            TEST_DATABASE_ROOT
+            / database_name
+            / f"{database_name}.sqlite"
+        ),
+    ]
+
+    for path in candidate_paths:
+        if path.exists():
+            return path
+
+    raise FileNotFoundError(
+        "SQLite database not found in either Spider "
+        "database root for: "
+        f"{database_name}"
     )
-
-    if not path.exists():
-        raise FileNotFoundError(
-            "SQLite database not found: "
-            f"{path}"
-        )
-
-    return path
 
 
 # ============================================================
