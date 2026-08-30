@@ -164,6 +164,15 @@ def repair_table_identifiers(sql: str) -> str:
         if actual_table is None:
             return match.group(0)
 
+        # Preserve/repair PostgreSQL schema casing.
+        #
+        # Mixed-case schema names must remain quoted, otherwise
+        # PostgreSQL folds them to lowercase.
+        if schema_name == schema_name.lower():
+            repaired_schema = schema_token
+        else:
+            repaired_schema = f'"{schema_name}"'
+
         # Lowercase PostgreSQL identifiers do not require quotes.
         if actual_table == actual_table.lower():
 
@@ -177,7 +186,7 @@ def repair_table_identifiers(sql: str) -> str:
 
         return (
             f"{keyword} "
-            f"{schema_name}."
+            f"{repaired_schema}."
             f"{repaired_table}"
         )
 

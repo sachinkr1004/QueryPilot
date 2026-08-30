@@ -16,16 +16,6 @@ PROJECT_ROOT = BASE_DIR.parent.parent
 
 TEST_SET_PATH = BASE_DIR / "test_set.json"
 
-SQLITE_ROOT = (
-    PROJECT_ROOT
-    / "dataset"
-    / "spider"
-    / "spider_data"
-    / "spider_data"
-    / "database"
-)
-
-
 # ============================================================
 # LOAD BENCHMARK
 # ============================================================
@@ -187,10 +177,8 @@ def tie_aware_check(
             gold_sql
         )
 
-        sqlite_path = (
-            SQLITE_ROOT
-            / db_id
-            / f"{db_id}.sqlite"
+        sqlite_path = get_sqlite_database_path(
+            db_id
         )
 
         conn = sqlite3.connect(sqlite_path)
