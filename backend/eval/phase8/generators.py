@@ -178,3 +178,210 @@ POSTGRESQL SQL:
     )
 
     return clean_sql(sql)
+
+# ============================================================
+# LOCAL MODEL COMPARISON SUPPORT
+# ============================================================
+
+from pathlib import Path
+
+import torch
+from peft import PeftModel
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+)
+
+
+BASE_QWEN_MODEL = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
+
+ADAPTER_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "finetuning"
+    / "outputs"
+    / "querypilot_qwen_lora"
+)
+
+LOCAL_INSTRUCTION = (
+    "Generate the correct PostgreSQL SQL query "
+    "for the user's question using only the "
+    "provided database schema, relevant database "
+    "values, and safe RAG examples. "
+    "Return only one executable PostgreSQL query."
+)
+
+MAX_NEW_TOKENS = 256
+
+_LOCAL_TOKENIZER = None
+_LOCAL_MODEL = None
+_LOCAL_DEVICE = None
+_LOCAL_GENERATOR = None
+
+
+def load_phase8_local_generator(generator_name):
+    global _LOCAL_TOKENIZER
+    global _LOCAL_MODEL
+    global _LOCAL_DEVICE
+    global _LOCAL_GENERATOR
+
+    if generator_name not in {
+        "base_qwen",
+        "qwen_lora",
+    }:
+        raise ValueError(
+            f"Unsupported local generator: {generator_name}"
+        )
+
+    if (
+        _LOCAL_MODEL is not None
+        and _LOCAL_GENERATOR == generator_name
+    ):
+        return
+
+    print("=" * 80)
+    print("LOADING PHASE-8 LOCAL MODEL")
+    print("=" * 80)
+    print()
+    print("Generator:", generator_name)
+    print("Base model:", BASE_QWEN_MODEL)
+
+    if generator_name == "qwen_lora":
+        print("Adapter   :", ADAPTER_PATH)
+
+    print()
+
+    tokenizer_source = (
+        ADAPTER_PATH
+        if generator_name == "qwen_lora"
+        else BASE_QWEN_MODEL
+    )
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        tokenizer_source
+    )
+
+    base_model = AutoModelForCausalLM.from_pretrained(
+        BASE_QWEN_MODEL,
+        torch_dtype="auto",
+    )
+
+    if generator_name == "qwen_lora":
+        model = PeftModel.from_pretrained(
+            base_model,
+            ADAPTER_PATH,
+        )
+    else:
+        model = base_model
+
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
+
+    model = model.to(device)
+    model.eval()
+
+    _LOCAL_TOKENIZER = tokenizer
+    _LOCAL_MODEL = model
+    _LOCAL_DEVICE = device
+    _LOCAL_GENERATOR = generator_name
+
+    print("Device    :", device)
+    print()
+    print("✅ PHASE-8 LOCAL MODEL READY")
+    print("=" * 80)
+    print()
+
+
+def generate_phase8_local_sql(
+    question,
+    context,
+):
+    if (
+        _LOCAL_TOKENIZER is None
+        or _LOCAL_MODEL is None
+        or _LOCAL_DEVICE is None
+    ):
+        raise RuntimeError(
+            "Local model has not been loaded."
+        )
+
+    messages = [
+        {
+            "role": "system",
+            "content": LOCAL_INSTRUCTION,
+        },
+        {
+            "role": "user",
+            "content": context["input_context"],
+        },
+    ]
+
+    inputs = _LOCAL_TOKENIZER.apply_chat_template(
+        messages,
+        tokenize=True,
+        add_generation_prompt=True,
+        return_tensors="pt",
+        return_dict=True,
+    )
+
+    inputs = {
+        key: value.to(_LOCAL_DEVICE)
+        for key, value in inputs.items()
+    }
+
+    prompt_length = inputs["input_ids"].shape[1]
+
+    with torch.no_grad():
+        generated = _LOCAL_MODEL.generate(
+            **inputs,
+            max_new_tokens=MAX_NEW_TOKENS,
+            do_sample=False,
+            pad_token_id=_LOCAL_TOKENIZER.eos_token_id,
+        )
+
+    generated_tokens = generated[
+        0,
+        prompt_length:,
+    ]
+
+    sql = _LOCAL_TOKENIZER.decode(
+        generated_tokens,
+        skip_special_tokens=True,
+    ).strip()
+
+    return clean_sql(sql)
+
+
+def prepare_phase8_generator(generator_name):
+    if generator_name == "phase8_baseline":
+        return
+
+    load_phase8_local_generator(
+        generator_name
+    )
+
+
+def generate_phase8_sql(
+    generator_name,
+    question,
+    context,
+):
+    if generator_name == "phase8_baseline":
+        return generate_phase8_baseline_sql(
+            question=question,
+            context=context,
+        )
+
+    if generator_name in {
+        "base_qwen",
+        "qwen_lora",
+    }:
+        return generate_phase8_local_sql(
+            question=question,
+            context=context,
+        )
+
+    raise ValueError(
+        f"Unknown Phase-8 generator: {generator_name}"
+    )

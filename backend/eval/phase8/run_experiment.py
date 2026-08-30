@@ -17,7 +17,8 @@ from eval.phase8.retrieval_context import (
 )
 
 from eval.phase8.generators import (
-    generate_phase8_baseline_sql,
+    generate_phase8_sql,
+    prepare_phase8_generator,
 )
 
 from eval.phase8.metrics_utils import (
@@ -148,7 +149,8 @@ def evaluate_one(
     generation_start = time.perf_counter()
 
     generated_sql = (
-        generate_phase8_baseline_sql(
+        generate_phase8_sql(
+            generator_name=config["generator"],
             question=question,
             context=context,
         )
@@ -764,6 +766,21 @@ def run_experiment(
     print()
 
     # --------------------------------------------------------
+    # PREPARE GENERATOR
+    # --------------------------------------------------------
+
+    remaining_cases = [
+        test_case
+        for test_case in cases
+        if test_case["id"] not in completed_ids
+    ]
+
+    if remaining_cases:
+        prepare_phase8_generator(
+            config["generator"]
+        )
+
+    # --------------------------------------------------------
     # EVALUATE CASES
     # --------------------------------------------------------
 
@@ -894,6 +911,16 @@ def main():
     )
 
     parser.add_argument(
+        "--generator",
+        choices=[
+            "phase8_baseline",
+            "base_qwen",
+            "qwen_lora",
+        ],
+        default="phase8_baseline",
+    )
+
+    parser.add_argument(
         "--top-k",
         type=int,
         default=7,
@@ -958,7 +985,7 @@ def main():
     args = parser.parse_args()
 
     config = {
-        "generator": "phase8_baseline",
+        "generator": args.generator,
         "top_k": args.top_k,
         "fk_expansion": (
             args.fk_expansion
