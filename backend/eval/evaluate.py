@@ -8,6 +8,7 @@ from llm.retrieve_schema import retrieve_schema
 from llm.retrieve_examples import retrieve_examples
 from llm.baseline_client import generate_sql, correct_sql
 from db import execute_query
+from finetuning.spider_context import get_sqlite_database_path
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -39,17 +40,7 @@ def load_test_set():
 # ============================================================
 
 def execute_gold_sql(db_id: str, gold_sql: str):
-
-    sqlite_path = (
-        SQLITE_ROOT
-        / db_id
-        / f"{db_id}.sqlite"
-    )
-
-    if not sqlite_path.exists():
-        raise FileNotFoundError(
-            f"SQLite database not found: {sqlite_path}"
-        )
+    sqlite_path = get_sqlite_database_path(db_id)
 
     conn = sqlite3.connect(sqlite_path)
 
@@ -57,7 +48,6 @@ def execute_gold_sql(db_id: str, gold_sql: str):
         cursor = conn.cursor()
         cursor.execute(gold_sql)
         return cursor.fetchall()
-
     finally:
         conn.close()
 
