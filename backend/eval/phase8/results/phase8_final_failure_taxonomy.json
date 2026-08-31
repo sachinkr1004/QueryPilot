@@ -1,0 +1,108 @@
+{
+  "phase": "8.12",
+  "source_result": "eval/phase8/results/phase8_final_test.json",
+  "official_final_metrics_unchanged": true,
+  "semantic_failure_count": 21,
+  "required_table_retrieval_failures": 0,
+  "category_counts": {
+    "genuine_sql_reasoning": 6,
+    "projection_result_shape": 8,
+    "benchmark_mismatch_or_ambiguity": 4,
+    "semantic_review_regression": 2,
+    "cross_engine_numeric_equivalence": 1
+  },
+  "notes": [
+    "Primary categories are mutually exclusive.",
+    "This taxonomy is diagnostic and does not rescore the frozen final benchmark.",
+    "Cases district_spokesman_004 and conference_026 were experimentally confirmed as question/gold-SQL mismatches.",
+    "Cases conference_023 and vehicle_rent_028 were experimentally confirmed as semantic-review regressions.",
+    "Case district_spokesman_009 differs by cross-engine numeric type/precision representation with absolute Decimal difference 7E-16.",
+    "Cases art_1_112 and cre_Students_Information_Systems_003 are retained as semantic ambiguities rather than asserted benchmark defects."
+  ],
+  "cases": {
+    "phase8_final_pilot_1_032": {
+      "category": "genuine_sql_reasoning",
+      "reason": "Unjustified DISTINCT changed the required count/cardinality."
+    },
+    "phase8_final_book_review_004": {
+      "category": "genuine_sql_reasoning",
+      "reason": "Aggregation scope mismatch: generated per-book grouping instead of the benchmark global max/min result."
+    },
+    "phase8_final_conference_037": {
+      "category": "genuine_sql_reasoning",
+      "reason": "Incorrect join/filter semantics changed participant counts."
+    },
+    "phase8_final_conference_039": {
+      "category": "genuine_sql_reasoning",
+      "reason": "Grouped by conference name instead of conference instance/id, merging distinct conferences."
+    },
+    "phase8_final_government_shift_010": {
+      "category": "genuine_sql_reasoning",
+      "reason": "Used the wrong relationship/table despite the required tables being retrieved."
+    },
+    "phase8_final_government_shift_015": {
+      "category": "genuine_sql_reasoning",
+      "reason": "Added an unsupported extra NOT EXISTS constraint and over-filtered the result."
+    },
+    "phase8_final_pilot_1_057": {
+      "category": "projection_result_shape",
+      "reason": "Correct grouped values but output columns were returned in the wrong order."
+    },
+    "phase8_final_boat_1_019": {
+      "category": "projection_result_shape",
+      "reason": "Returned only the sailor name while the reference result also required the sailor id."
+    },
+    "phase8_final_vehicle_driver_005": {
+      "category": "projection_result_shape",
+      "reason": "Correct values but projected driver id and count in the opposite order."
+    },
+    "phase8_final_art_1_049": {
+      "category": "projection_result_shape",
+      "reason": "Correct groups but location and count columns were returned in the opposite order."
+    },
+    "phase8_final_vehicle_rent_036": {
+      "category": "projection_result_shape",
+      "reason": "Returned an extra aggregate column in addition to the required vehicle name."
+    },
+    "phase8_final_customers_and_orders_026": {
+      "category": "projection_result_shape",
+      "reason": "Used SELECT * instead of returning only the requested product name."
+    },
+    "phase8_final_online_exams_004": {
+      "category": "projection_result_shape",
+      "reason": "Correct filter but exam name/date columns were returned in the opposite order."
+    },
+    "phase8_final_cre_Students_Information_Systems_044": {
+      "category": "projection_result_shape",
+      "reason": "Teacher id and count were returned in the opposite order; semantic review did not repair the mismatch."
+    },
+    "phase8_final_district_spokesman_004": {
+      "category": "benchmark_mismatch_or_ambiguity",
+      "reason": "Confirmed gold-SQL mismatch: question asks for the population sum of the top-3-area districts; QueryPilot produced 19607 while gold SQL aggregated all districts to 22531."
+    },
+    "phase8_final_art_1_112": {
+      "category": "benchmark_mismatch_or_ambiguity",
+      "reason": "Semantic scope ambiguity: gold uses row-level non-canvas filtering while QueryPilot interprets 'no work with medium on canvas' at location level."
+    },
+    "phase8_final_conference_026": {
+      "category": "benchmark_mismatch_or_ambiguity",
+      "reason": "Confirmed gold-SQL mismatch: question specifies United States staff but gold SQL omits the nationality filter."
+    },
+    "phase8_final_cre_Students_Information_Systems_003": {
+      "category": "benchmark_mismatch_or_ambiguity",
+      "reason": "Zero-count ambiguity: QueryPilot treats zero detentions as less than two; the reference inner join excludes students with no detention rows."
+    },
+    "phase8_final_conference_023": {
+      "category": "semantic_review_regression",
+      "reason": "Confirmed regression: original generated SQL was correct; semantic review added LIMIT 1 and made the final result incorrect."
+    },
+    "phase8_final_vehicle_rent_028": {
+      "category": "semantic_review_regression",
+      "reason": "Confirmed regression: original SQL matched the reference; semantic review changed join semantics and introduced an extra zero-rental vehicle."
+    },
+    "phase8_final_district_spokesman_009": {
+      "category": "cross_engine_numeric_equivalence",
+      "reason": "Equivalent AVG computation differed across SQLite/PostgreSQL representation by 7E-16 and by stored type (float versus string)."
+    }
+  }
+}

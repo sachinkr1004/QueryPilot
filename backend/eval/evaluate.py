@@ -80,7 +80,16 @@ def compare_results(
     if order_sensitive:
         return generated == gold
 
-    return sorted(generated) == sorted(gold)
+    def row_sort_key(row):
+        return tuple(
+            (value is not None, value or "")
+            for value in row
+        )
+
+    return (
+        sorted(generated, key=row_sort_key)
+        == sorted(gold, key=row_sort_key)
+    )
 
 
 # ============================================================

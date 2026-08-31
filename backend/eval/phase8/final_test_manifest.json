@@ -1,7 +1,7 @@
 {
   "phase": "8.1",
   "name": "QueryPilot Untouched Final Test Manifest",
-  "status": "frozen_not_evaluated",
+  "status": "evaluated_not_inspected",
   "seed": 42,
   "database_count": 20,
   "questions_per_database": 5,
@@ -808,5 +808,7 @@
       "question": "Among the students who have an event record, who do not have a student loan? Return the students' biographical data.",
       "gold_sql": "SELECT T1.bio_data FROM Students AS T1 JOIN Student_Events AS T2 WHERE T1.student_id  =  T2.student_id EXCEPT SELECT T1.bio_data FROM Students AS T1 JOIN Student_Loans AS T2 WHERE T1.student_id  =  T2.student_id"
     }
-  ]
+  ],
+  "evaluation_experiment_id": "phase8_final_test",
+  "result_file": "phase8_final_test.json"
 }
