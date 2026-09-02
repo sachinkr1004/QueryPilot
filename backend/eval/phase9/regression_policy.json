@@ -1,0 +1,71 @@
+{
+  "phase": "9.4",
+  "name": "QueryPilot Phase-9 Regression Benchmark Policy",
+  "status": "frozen_before_optimization",
+
+  "benchmark": {
+    "source": "spider_test",
+    "questions": 40,
+    "databases": 20,
+    "questions_per_database": 2,
+    "seed": 42,
+    "phase8_final_test_excluded": true,
+    "phase8_overlap": 0,
+
+    "records_sha256": "e701146f8b7cd0c14d311b2e720f111d8f08c209736955d737ad50b1474e42c7",
+    "manifest_sha256": "314577c03046d4b8aac2eeba795938caa78173e747551b1027f2bf45afc111d9",
+    "profile_sha256": "bd2cd088ae3c925a1e45e9f058cff7da9adac94ae070865587f177db5d28873b"
+  },
+
+  "primary_quality_metrics": [
+    "strict_accuracy",
+    "semantic_accuracy",
+    "execution_success_rate"
+  ],
+
+  "optimization_metrics": [
+    "mean_latency_ms",
+    "median_latency_ms",
+    "p95_latency_ms",
+    "llm_calls",
+    "prompt_tokens",
+    "completion_tokens",
+    "total_tokens",
+    "estimated_cost"
+  ],
+
+  "regression_policy": {
+    "semantic_accuracy": {
+      "allowed_drop_percentage_points": 0,
+      "rule": "Must not decrease from the frozen Phase-9 production baseline."
+    },
+
+    "execution_success_rate": {
+      "allowed_drop_percentage_points": 0,
+      "rule": "Must not decrease from the frozen Phase-9 production baseline."
+    },
+
+    "strict_accuracy": {
+      "allowed_drop_percentage_points": 2.5,
+      "maximum_additional_failures": 1,
+      "rule": "At most one additional strict failure on the 40-question benchmark, and only when semantic accuracy does not regress."
+    }
+  },
+
+  "safety_policy": {
+    "allowed_safety_regressions": 0,
+    "rule": "No optimization may weaken SQL safety guarantees."
+  },
+
+  "reliability_policy": {
+    "rule": "Infrastructure or provider failures must be separated from QueryPilot correctness failures before accepting or rejecting an optimization."
+  },
+
+  "experiment_policy": {
+    "change_one_major_variable_at_a_time": true,
+    "investigate_suspicious_regressions": true,
+    "do_not_tune_on_phase8_final_test": true,
+    "preserve_phase8_official_result": true,
+    "baseline_must_be_measured_before_optimization": true
+  }
+}

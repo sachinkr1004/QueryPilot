@@ -1,0 +1,151 @@
+{
+  "phase": "9.4",
+  "seed": 42,
+  "candidate_source": "spider_test",
+  "phase8_consumed_questions": 100,
+  "fresh_candidate_questions": 2047,
+  "database_count": 20,
+  "questions_per_database": 2,
+  "selected_databases": [
+    {
+      "db_id": "pilot_1",
+      "question_count": 77,
+      "table_count": 2,
+      "column_count": 5,
+      "foreign_key_count": 1
+    },
+    {
+      "db_id": "warehouse_1",
+      "question_count": 73,
+      "table_count": 2,
+      "column_count": 7,
+      "foreign_key_count": 1
+    },
+    {
+      "db_id": "book_review",
+      "question_count": 16,
+      "table_count": 2,
+      "column_count": 12,
+      "foreign_key_count": 1
+    },
+    {
+      "db_id": "car_road_race",
+      "question_count": 39,
+      "table_count": 2,
+      "column_count": 15,
+      "foreign_key_count": 1
+    },
+    {
+      "db_id": "boat_1",
+      "question_count": 73,
+      "table_count": 3,
+      "column_count": 10,
+      "foreign_key_count": 2
+    },
+    {
+      "db_id": "country_language",
+      "question_count": 35,
+      "table_count": 3,
+      "column_count": 12,
+      "foreign_key_count": 2
+    },
+    {
+      "db_id": "restaurant_bills",
+      "question_count": 25,
+      "table_count": 3,
+      "column_count": 13,
+      "foreign_key_count": 2
+    },
+    {
+      "db_id": "vehicle_driver",
+      "question_count": 37,
+      "table_count": 3,
+      "column_count": 13,
+      "foreign_key_count": 2
+    },
+    {
+      "db_id": "district_spokesman",
+      "question_count": 16,
+      "table_count": 3,
+      "column_count": 15,
+      "foreign_key_count": 2
+    },
+    {
+      "db_id": "art_1",
+      "question_count": 109,
+      "table_count": 3,
+      "column_count": 20,
+      "foreign_key_count": 2
+    },
+    {
+      "db_id": "conference",
+      "question_count": 39,
+      "table_count": 4,
+      "column_count": 16,
+      "foreign_key_count": 3
+    },
+    {
+      "db_id": "university_rank",
+      "question_count": 39,
+      "table_count": 4,
+      "column_count": 20,
+      "foreign_key_count": 3
+    },
+    {
+      "db_id": "vehicle_rent",
+      "question_count": 39,
+      "table_count": 4,
+      "column_count": 22,
+      "foreign_key_count": 3
+    },
+    {
+      "db_id": "customers_and_orders",
+      "question_count": 77,
+      "table_count": 5,
+      "column_count": 22,
+      "foreign_key_count": 3
+    },
+    {
+      "db_id": "aan_1",
+      "question_count": 85,
+      "table_count": 5,
+      "column_count": 15,
+      "foreign_key_count": 5
+    },
+    {
+      "db_id": "planet_1",
+      "question_count": 71,
+      "table_count": 6,
+      "column_count": 23,
+      "foreign_key_count": 7
+    },
+    {
+      "db_id": "government_shift",
+      "question_count": 35,
+      "table_count": 7,
+      "column_count": 23,
+      "foreign_key_count": 7
+    },
+    {
+      "db_id": "online_exams",
+      "question_count": 35,
+      "table_count": 7,
+      "column_count": 34,
+      "foreign_key_count": 7
+    },
+    {
+      "db_id": "cre_Doc_Workflow",
+      "question_count": 35,
+      "table_count": 9,
+      "column_count": 31,
+      "foreign_key_count": 9
+    },
+    {
+      "db_id": "cre_Students_Information_Systems",
+      "question_count": 71,
+      "table_count": 15,
+      "column_count": 55,
+      "foreign_key_count": 14
+    }
+  ]
+}

@@ -1,0 +1,336 @@
+{
+  "phase": "9.4",
+  "name": "QueryPilot Phase-9 Regression Benchmark",
+  "status": "frozen",
+  "purpose": "Phase-9 development, profiling, optimization, and regression testing.",
+  "source": "spider_test",
+  "seed": 42,
+  "database_count": 20,
+  "questions_per_database": 2,
+  "questions": 40,
+  "phase8_final_test_excluded": true,
+  "phase8_consumed_questions": 100,
+  "phase8_overlap": 0,
+  "records": [
+    {
+      "id": "phase9_regression_pilot_1_033",
+      "db_id": "pilot_1",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 33,
+      "question": "What are the names of pilots between the ages of 30 and 40, ordered by age ascending?",
+      "gold_sql": "SELECT pilot_name FROM pilotskills WHERE age BETWEEN 30 AND 40 ORDER BY age"
+    },
+    {
+      "id": "phase9_regression_pilot_1_047",
+      "db_id": "pilot_1",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 47,
+      "question": "What are the average and smallest ages of all pilots?",
+      "gold_sql": "SELECT avg(age) ,  min(age) FROM pilotskills"
+    },
+    {
+      "id": "phase9_regression_warehouse_1_018",
+      "db_id": "warehouse_1",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 18,
+      "question": "Find the number of all distinct contents in all the boxes.",
+      "gold_sql": "SELECT count(DISTINCT CONTENTS) FROM boxes"
+    },
+    {
+      "id": "phase9_regression_warehouse_1_022",
+      "db_id": "warehouse_1",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 22,
+      "question": "Find the code of boxes that are stored at the warehouses located at Chicago or New York.",
+      "gold_sql": "SELECT T1.code FROM boxes AS T1 JOIN warehouses AS T2 ON T1.warehouse  =  T2.code WHERE T2.location  =  'Chicago' OR T2.location  =  'New York'"
+    },
+    {
+      "id": "phase9_regression_book_review_003",
+      "db_id": "book_review",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 3,
+      "question": "What are the titles of books that are not \"Poet\"?",
+      "gold_sql": "SELECT Title FROM book WHERE TYPE != \"Poet\""
+    },
+    {
+      "id": "phase9_regression_book_review_010",
+      "db_id": "book_review",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 10,
+      "question": "What are the types of books that have at least three books belonging to?",
+      "gold_sql": "SELECT TYPE FROM book GROUP BY TYPE HAVING COUNT(*)  >=  3"
+    },
+    {
+      "id": "phase9_regression_car_road_race_013",
+      "db_id": "car_road_race",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 13,
+      "question": "What are the names of drivers, ordered descending alphabetically?",
+      "gold_sql": "SELECT Driver_Name FROM driver ORDER BY Driver_Name DESC"
+    },
+    {
+      "id": "phase9_regression_car_road_race_035",
+      "db_id": "car_road_race",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 35,
+      "question": "Find the names of drivers who were in both \"James Hinchcliffe\" and \"Carl Skerlong\" pole positions before.",
+      "gold_sql": "SELECT T1.Driver_Name FROM driver AS T1 JOIN race AS T2 ON T1.Driver_ID  =  T2.Driver_ID WHERE Pole_Position  =  \"Carl Skerlong\" INTERSECT SELECT T1.Driver_Name FROM driver AS T1 JOIN race AS T2 ON T1.Driver_ID  =  T2.Driver_ID WHERE Pole_Position  =  \"James Hinchcliffe\""
+    },
+    {
+      "id": "phase9_regression_boat_1_019",
+      "db_id": "boat_1",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 19,
+      "question": "Find the id of Sailors (sid) that reserved red or blue boat.",
+      "gold_sql": "SELECT DISTINCT T2.sid FROM Boats AS T1 JOIN Reserves AS T2 ON  T1.bid  =  T2.bid WHERE T1.color  =  'red' OR T1.color  =  \"blue\""
+    },
+    {
+      "id": "phase9_regression_boat_1_025",
+      "db_id": "boat_1",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 25,
+      "question": "What are the names and ids of sailors who reserved red and blue boats?",
+      "gold_sql": "SELECT DISTINCT T2.sid ,  T3.name FROM Boats AS T1 JOIN Reserves AS T2 ON  T1.bid  =  T2.bid JOIN Sailors AS T3 ON T2.sid  =  T3.sid WHERE T1.color  =  'red' INTERSECT SELECT DISTINCT T2.sid ,  T3.name FROM Boats AS T1 JOIN Reserves AS T2 ON  T1.bid  =  T2.bid JOIN Sailors AS T3 ON T2.sid  =  T3.sid WHERE T1.color  =  \"blue\""
+    },
+    {
+      "id": "phase9_regression_country_language_007",
+      "db_id": "country_language",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 7,
+      "question": "What are the names of the countries, ordered descending by overall score?",
+      "gold_sql": "SELECT name FROM countries ORDER BY overall_score DESC"
+    },
+    {
+      "id": "phase9_regression_country_language_025",
+      "db_id": "country_language",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 25,
+      "question": "Show the official languages sorted in descending order by the average overall scores among countries speaking them.",
+      "gold_sql": "SELECT T3.name FROM countries AS T1 JOIN official_languages AS T2 ON T1.id  =  T2.country_id JOIN languages AS T3 ON T2.language_id  =  T3.id GROUP BY T3.id ORDER BY avg(T1.overall_score) DESC"
+    },
+    {
+      "id": "phase9_regression_restaurant_bills_010",
+      "db_id": "restaurant_bills",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 10,
+      "question": "Show different nationalities of customers, along with the number of customers of each nationality.",
+      "gold_sql": "SELECT Nationality ,  COUNT(*) FROM customer GROUP BY Nationality"
+    },
+    {
+      "id": "phase9_regression_restaurant_bills_023",
+      "db_id": "restaurant_bills",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 23,
+      "question": "List the names of customers that do not have any order.",
+      "gold_sql": "SELECT name FROM customer WHERE Customer_ID NOT IN (SELECT Customer_ID FROM customer_order)"
+    },
+    {
+      "id": "phase9_regression_vehicle_driver_012",
+      "db_id": "vehicle_driver",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 12,
+      "question": "How many drivers have driven vehicles built in 2012?",
+      "gold_sql": "SELECT count(DISTINCT T1.driver_id) FROM vehicle_driver AS T1 JOIN vehicle AS T2 ON T1.vehicle_id  =  T2.vehicle_id WHERE T2.build_year  =  2012"
+    },
+    {
+      "id": "phase9_regression_vehicle_driver_013",
+      "db_id": "vehicle_driver",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 13,
+      "question": "Count the number of different drivers who have driven vehicles built in 2012.",
+      "gold_sql": "SELECT count(DISTINCT T1.driver_id) FROM vehicle_driver AS T1 JOIN vehicle AS T2 ON T1.vehicle_id  =  T2.vehicle_id WHERE T2.build_year  =  2012"
+    },
+    {
+      "id": "phase9_regression_district_spokesman_005",
+      "db_id": "district_spokesman",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 5,
+      "question": "Find all spokesman's names and speech titles.",
+      "gold_sql": "SELECT name ,  speach_title FROM spokesman"
+    },
+    {
+      "id": "phase9_regression_district_spokesman_015",
+      "db_id": "district_spokesman",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 15,
+      "question": "Find the total and average population of the districts which have some spokesman.",
+      "gold_sql": "SELECT sum(population) ,  avg(population) FROM district WHERE district_id IN (SELECT district_id FROM spokesman_district)"
+    },
+    {
+      "id": "phase9_regression_art_1_023",
+      "db_id": "art_1",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 23,
+      "question": "What is the first name and age of the artist who lived the longest?",
+      "gold_sql": "SELECT fname  ,  deathYear - birthYear FROM artists ORDER BY deathYear - birthYear DESC LIMIT 1"
+    },
+    {
+      "id": "phase9_regression_art_1_107",
+      "db_id": "art_1",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 107,
+      "question": "What are the first and last names of the artists who did not sculpt but could paint.",
+      "gold_sql": "SELECT T1.lname ,  T1.fname FROM artists AS T1 JOIN paintings AS T2 ON T1.artistID  =  T2.painterID EXCEPT SELECT T3.lname ,  T3.fname FROM artists AS T3 JOIN sculptures AS T4 ON T3.artistID  =  T4.sculptorID"
+    },
+    {
+      "id": "phase9_regression_conference_001",
+      "db_id": "conference",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 1,
+      "question": "What is the total number of conferences?",
+      "gold_sql": "SELECT count(*) FROM conference"
+    },
+    {
+      "id": "phase9_regression_conference_026",
+      "db_id": "conference",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 26,
+      "question": "What are the names of all the conferences that has staff from Canada attending?",
+      "gold_sql": "SELECT T1.conference_name FROM conference AS T1 JOIN conference_participation AS T2 ON T1.conference_id = T2.conference_id JOIN staff AS T3 ON T2.staff_id  =  T3.staff_id WHERE T3.nationality  =  \"Canada\""
+    },
+    {
+      "id": "phase9_regression_university_rank_001",
+      "db_id": "university_rank",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 1,
+      "question": "How many universities are in Illinois or Ohio?",
+      "gold_sql": "SELECT count(*) FROM University WHERE state  =  'Illinois' OR state  =  'Ohio'"
+    },
+    {
+      "id": "phase9_regression_university_rank_026",
+      "db_id": "university_rank",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 26,
+      "question": "What is the name and overall ranking of universities in Wisconsin state?",
+      "gold_sql": "SELECT T1.university_name ,  T2.rank FROM University AS T1 JOIN Overall_ranking AS T2 ON T1.university_id  =  T2.university_id WHERE T1.state  =  'Wisconsin'"
+    },
+    {
+      "id": "phase9_regression_vehicle_rent_019",
+      "db_id": "vehicle_rent",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 19,
+      "question": "Show the name, age, membership credit for all customers?",
+      "gold_sql": "SELECT name ,  age ,  membership_credit FROM customers"
+    },
+    {
+      "id": "phase9_regression_vehicle_rent_038",
+      "db_id": "vehicle_rent",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 38,
+      "question": "What are the average city fuel economy rate, average highway fuel economy rate for different types of powertrains?",
+      "gold_sql": "SELECT avg(City_fuel_economy_rate) ,  avg(Highway_fuel_economy_rate) , Type_of_powertrain FROM vehicles GROUP BY Type_of_powertrain"
+    },
+    {
+      "id": "phase9_regression_customers_and_orders_023",
+      "db_id": "customers_and_orders",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 23,
+      "question": "Give the id and name of the cheapest Hardware product.",
+      "gold_sql": "SELECT product_id ,  product_name FROM Products WHERE product_type_code  =  \"Hardware\" ORDER BY product_price ASC LIMIT 1"
+    },
+    {
+      "id": "phase9_regression_customers_and_orders_076",
+      "db_id": "customers_and_orders",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 76,
+      "question": "What are the order ids and corresponding order dates for orders with a quantity greater than 6 or consisting of more than 3 products?",
+      "gold_sql": "SELECT T1.order_date ,  T1.order_id FROM Customer_Orders AS T1 JOIN Order_items AS T2 ON T1.order_id  =  T2.order_id WHERE T2.order_quantity  >  6 UNION SELECT T1.order_date ,  T1.order_id FROM Customer_Orders AS T1 JOIN Order_items AS T2 ON T1.order_id  =  T2.order_id GROUP BY T1.order_id HAVING count(*)  >  3;"
+    },
+    {
+      "id": "phase9_regression_aan_1_070",
+      "db_id": "aan_1",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 70,
+      "question": "What are the ids and titles for papers that have never been cited?",
+      "gold_sql": "SELECT paper_id ,  title FROM Paper WHERE paper_id NOT IN (SELECT cited_paper_id FROM Citation)"
+    },
+    {
+      "id": "phase9_regression_aan_1_072",
+      "db_id": "aan_1",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 72,
+      "question": "What is the name of the affiliation which publishes the greatest number of papers among those whose address contains 'China'.",
+      "gold_sql": "SELECT T1.name FROM Affiliation AS T1 JOIN Author_list AS T2 ON T1.affiliation_id  =  T2.affiliation_id WHERE T1.address LIKE \"%China%\" GROUP BY T1.affiliation_id ORDER BY count(*) DESC LIMIT 1"
+    },
+    {
+      "id": "phase9_regression_planet_1_036",
+      "db_id": "planet_1",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 36,
+      "question": "List the dates of all shipments.",
+      "gold_sql": "SELECT Date FROM Shipment;"
+    },
+    {
+      "id": "phase9_regression_planet_1_047",
+      "db_id": "planet_1",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 47,
+      "question": "List the manger's name and number of shipments under his management.",
+      "gold_sql": "SELECT T2.Name ,  count(*) FROM Shipment AS T1 JOIN Employee AS T2 ON T1.Manager = T2.EmployeeID GROUP BY T1.Manager;"
+    },
+    {
+      "id": "phase9_regression_government_shift_031",
+      "db_id": "government_shift",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 31,
+      "question": "Find all the layer type codes with their corresponding usage count.",
+      "gold_sql": "SELECT analytical_layer_type_code ,  count(*) FROM analytical_layer GROUP BY analytical_layer_type_code"
+    },
+    {
+      "id": "phase9_regression_government_shift_034",
+      "db_id": "government_shift",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 34,
+      "question": "Which services have been rated as \"unsatisfied\" in customers and services details? Give me the service_details.",
+      "gold_sql": "SELECT DISTINCT t1.service_details FROM services AS t1 JOIN customers_and_services AS t2 ON t1.service_id  =  t2.service_id WHERE t2.customers_and_services_details  =  \"Unsatisfied\""
+    },
+    {
+      "id": "phase9_regression_online_exams_008",
+      "db_id": "online_exams",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 8,
+      "question": "For each question type, return its type code and its count of occurrence.",
+      "gold_sql": "SELECT Type_of_Question_Code ,  COUNT(*) FROM Questions GROUP BY Type_of_Question_Code"
+    },
+    {
+      "id": "phase9_regression_online_exams_010",
+      "db_id": "online_exams",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 10,
+      "question": "List all the distinct student answer texts to which comments \"Normal\" were given?",
+      "gold_sql": "SELECT DISTINCT Student_Answer_Text FROM Student_Answers WHERE Comments  =  \"Normal\""
+    },
+    {
+      "id": "phase9_regression_cre_Doc_Workflow_024",
+      "db_id": "cre_Doc_Workflow",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 24,
+      "question": "List the codes and descriptions for all staff roles.",
+      "gold_sql": "SELECT staff_role_code ,  staff_role_description FROM Ref_staff_roles"
+    },
+    {
+      "id": "phase9_regression_cre_Doc_Workflow_032",
+      "db_id": "cre_Doc_Workflow",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 32,
+      "question": "How many staff are the document with id 0 and process with id 9.",
+      "gold_sql": "SELECT count(*) FROM Staff_in_processes WHERE document_id  =  0 AND process_id  =  9"
+    },
+    {
+      "id": "phase9_regression_cre_Students_Information_Systems_023",
+      "db_id": "cre_Students_Information_Systems",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 23,
+      "question": "What is the biographical information of the students who got the most common result for their behaviour monitoring details ?",
+      "gold_sql": "select t1.bio_data from students as t1 join behaviour_monitoring as t2 on t1.student_id  =  t2.student_id where t2.behaviour_monitoring_details in ( select behaviour_monitoring_details from behaviour_monitoring group by behaviour_monitoring_details order by count(*) desc limit 1 ) except select t1.bio_data from students as t1 join behaviour_monitoring as t2 on t1.student_id  =  t2.student_id where t2.behaviour_monitoring_details not in ( select behaviour_monitoring_details from behaviour_monitoring group by behaviour_monitoring_details order by count(*) desc limit 1 )"
+    },
+    {
+      "id": "phase9_regression_cre_Students_Information_Systems_062",
+      "db_id": "cre_Students_Information_Systems",
+      "source": "spider_test",
+      "source_index_within_fresh_db_pool": 62,
+      "question": "How many students have gone through a detention?",
+      "gold_sql": "SELECT count(DISTINCT student_id) FROM Detention"
+    }
+  ]
+}
