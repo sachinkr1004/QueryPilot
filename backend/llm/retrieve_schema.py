@@ -1,3 +1,5 @@
+import re
+
 from sentence_transformers import SentenceTransformer
 
 from db import get_connection
@@ -7,28 +9,141 @@ from db import get_connection
 # EMBEDDING MODEL
 # ============================================================
 
-# Load the model only once when this module is imported.
 model = SentenceTransformer(
     "all-MiniLM-L6-v2"
 )
 
 
 # ============================================================
-# EXAMPLE-BASED DATABASE ROUTING
+# TOKEN / LEXICAL MATCHING
 # ============================================================
 
-def retrieve_database_candidates(
+STOP_WORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "by",
+    "do",
+    "does",
+    "each",
+    "for",
+    "from",
+    "have",
+    "how",
+    "in",
+    "is",
+    "it",
+    "list",
+    "many",
+    "name",
+    "number",
+    "of",
+    "on",
+    "or",
+    "show",
+    "that",
+    "the",
+    "to",
+    "what",
+    "which",
+    "who",
+    "with",
+}
+
+
+def normalize_word(word):
+    """
+    Lightweight singular/plural normalization.
+    """
+
+    word = word.lower().strip()
+
+    if word.endswith("ies") and len(word) > 3:
+        return word[:-3] + "y"
+
+    if word.endswith("s") and len(word) > 3:
+        return word[:-1]
+
+    return word
+
+
+def tokenize(text):
+    """
+    Extract useful normalized words.
+    """
+
+    words = re.findall(
+        r"[A-Za-z][A-Za-z0-9_]*",
+        text.lower(),
+    )
+
+    tokens = set()
+
+    for word in words:
+
+        normalized = normalize_word(
+            word
+        )
+
+        if normalized not in STOP_WORDS:
+            tokens.add(normalized)
+
+    return tokens
+
+
+def schema_match_score(
+    question,
+    schema_text,
+):
+    """
+    Compare meaningful question words
+    with schema vocabulary.
+    """
+
+    question_tokens = tokenize(
+        question
+    )
+
+    schema_tokens = tokenize(
+        schema_text
+    )
+
+    if not question_tokens:
+        return 0.0, []
+
+    matches = sorted(
+        question_tokens.intersection(
+            schema_tokens
+        )
+    )
+
+    score = (
+        len(matches)
+        / len(question_tokens)
+    )
+
+    return score, matches
+
+
+# ============================================================
+# VECTOR + LEXICAL RETRIEVAL
+# ============================================================
+
+def retrieve_schema_candidates(
     question: str,
     limit: int = 5,
 ):
     """
-    Find the SAFE Spider examples that are most similar
-    to the user's question.
+    Retrieve candidate databases using:
 
-    These examples are used as evidence for selecting
-    the correct database.
+    1. Embedding similarity
+    2. Lexical schema evidence
 
-    Lower distance = more similar.
+    Lower final_score is better.
     """
 
     question_embedding = model.encode(
@@ -39,21 +154,21 @@ def retrieve_database_candidates(
     cursor = conn.cursor()
 
     try:
+
         cursor.execute(
             """
             SELECT
                 database_name,
-                question,
-                sql,
-                embedding <=> %s::vector AS distance
-            FROM example_embeddings
-            ORDER BY embedding <=> %s::vector
-            LIMIT %s;
+                schema_text,
+                embedding <=> %s::vector
+                    AS distance
+            FROM schema_embeddings
+            ORDER BY
+                embedding <=> %s::vector;
             """,
             (
                 question_embedding,
                 question_embedding,
-                limit,
             ),
         )
 
@@ -63,70 +178,59 @@ def retrieve_database_candidates(
 
         for (
             database_name,
-            example_question,
-            sql,
+            schema_text,
             distance,
         ) in rows:
 
+            lexical_score, matches = (
+                schema_match_score(
+                    question,
+                    schema_text,
+                )
+            )
+
+            final_score = (
+                float(distance)
+                - (
+                    0.15
+                    * lexical_score
+                )
+            )
+
             candidates.append(
                 {
-                    "database_name": database_name,
-                    "question": example_question,
-                    "sql": sql,
-                    "distance": float(distance),
+                    "database_name":
+                        database_name,
+
+                    "schema_text":
+                        schema_text,
+
+                    "vector_distance":
+                        float(distance),
+
+                    "lexical_score":
+                        lexical_score,
+
+                    "matched_terms":
+                        matches,
+
+                    "final_score":
+                        final_score,
                 }
             )
 
-        return candidates
-
-    finally:
-        cursor.close()
-        conn.close()
-
-
-# ============================================================
-# FETCH SCHEMA
-# ============================================================
-
-def get_schema_for_database(
-    database_name: str,
-):
-    """
-    Fetch the authoritative schema text that was created by
-    build_schema_embeddings.py.
-
-    This schema includes:
-      - tables
-      - columns
-      - data types
-      - primary keys
-      - relationships
-    """
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute(
-            """
-            SELECT schema_text
-            FROM schema_embeddings
-            WHERE database_name = %s
-            LIMIT 1;
-            """,
-            (database_name,),
+        candidates.sort(
+            key=lambda item:
+                item["final_score"]
         )
 
-        row = cursor.fetchone()
-
-        if row is None:
-            return None
-
-        return row[0]
+        return candidates[:limit]
 
     finally:
+
         cursor.close()
         conn.close()
+
 
 
 # ============================================================
@@ -137,31 +241,28 @@ def retrieve_schema(
     question: str,
 ):
     """
-    QueryPilot database routing pipeline:
+    QueryPilot production database router.
 
-        User question
-              ↓
-        Question embedding
-              ↓
-        Nearest SAFE RAG example
-              ↓
-        Database selection
-              ↓
-        Fetch authoritative schema
-              ↓
-        Return database + schema
+    Flow:
+        question
+            ↓
+        schema embedding similarity
+            +
+        lexical schema matching
+            ↓
+        top-1 database
+            ↓
+        return database + schema + routing score
 
-    Return format remains compatible with the rest
-    of QueryPilot:
-
+    Return format:
         (
             database_name,
             schema_text,
-            routing_distance
+            routing_score,
         )
     """
 
-    candidates = retrieve_database_candidates(
+    candidates = retrieve_schema_candidates(
         question,
         limit=1,
     )
@@ -171,28 +272,10 @@ def retrieve_schema(
 
     best = candidates[0]
 
-    database_name = best[
-        "database_name"
-    ]
-
-    routing_distance = best[
-        "distance"
-    ]
-
-    schema_text = get_schema_for_database(
-        database_name
-    )
-
-    if schema_text is None:
-        raise ValueError(
-            "Schema not found for database: "
-            f"{database_name}"
-        )
-
     return (
-        database_name,
-        schema_text,
-        routing_distance,
+        best["database_name"],
+        best["schema_text"],
+        best["final_score"],
     )
 
 
@@ -201,12 +284,11 @@ def retrieve_schema(
 # ============================================================
 
 if __name__ == "__main__":
-
     question = input(
         "Enter your question: "
     )
 
-    candidates = retrieve_database_candidates(
+    candidates = retrieve_schema_candidates(
         question,
         limit=5,
     )
@@ -218,23 +300,28 @@ if __name__ == "__main__":
 
     for rank, candidate in enumerate(
         candidates,
-        1,
+        start=1,
     ):
-
         print()
         print(
             f"{rank}. "
             f"{candidate['database_name']}"
         )
-
         print(
-            "   Distance : "
-            f"{candidate['distance']:.6f}"
+            "   Vector distance : "
+            f"{candidate['vector_distance']:.6f}"
         )
-
         print(
-            "   Example  : "
-            f"{candidate['question']}"
+            "   Lexical score   : "
+            f"{candidate['lexical_score']:.6f}"
+        )
+        print(
+            "   Final score     : "
+            f"{candidate['final_score']:.6f}"
+        )
+        print(
+            "   Matched terms   : "
+            f"{candidate['matched_terms']}"
         )
 
     result = retrieve_schema(
@@ -247,25 +334,25 @@ if __name__ == "__main__":
     print("=" * 80)
 
     if result is None:
-
         print(
             "No database could be selected."
         )
-
     else:
-
-        database_name, schema_text, distance = result
+        (
+            database_name,
+            schema_text,
+            routing_score,
+        ) = result
 
         print(
             "Database:",
-            database_name
+            database_name,
         )
 
         print(
-            "Routing distance:",
-            f"{distance:.6f}"
+            "Routing score:",
+            f"{routing_score:.6f}",
         )
 
         print()
-
         print(schema_text)

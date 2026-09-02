@@ -1,34 +1,41 @@
-import os
 import sqlite3
 
 from sentence_transformers import SentenceTransformer
 
 from db import get_connection
-
-
-SCHEMAS = [
-    "car_1",
-    "concert_singer",
-    "employee_hire_evaluation",
-    "pets_1",
-    "world_1",
-]
-
-
-SPIDER_DB_FOLDER = (
-    "../dataset/spider/"
-    "spider_data/spider_data/database"
+from finetuning.spider_context import (
+    get_sqlite_database_path,
 )
 
 
+def get_supported_schemas(cursor):
+    """
+    Discover the Spider database schemas that are currently
+    available in PostgreSQL.
 
-def get_sqlite_path(schema_name):
-    return os.path.join(
-        SPIDER_DB_FOLDER,
-        schema_name,
-        f"{schema_name}.sqlite",
+    This avoids hardcoding benchmark database names.
+    """
+
+    cursor.execute(
+        """
+        SELECT schema_name
+        FROM information_schema.schemata
+        WHERE schema_name NOT IN (
+            'information_schema',
+            'pg_catalog',
+            'pg_toast',
+            'public'
+        )
+          AND schema_name NOT LIKE 'pg_temp_%'
+          AND schema_name NOT LIKE 'pg_toast_temp_%'
+        ORDER BY schema_name;
+        """
     )
 
+    return [
+        row[0]
+        for row in cursor.fetchall()
+    ]
 
 def get_relationships(schema_name):
     """
@@ -41,12 +48,10 @@ def get_relationships(schema_name):
     are useful schema information for SQL generation.
     """
 
-    sqlite_path = get_sqlite_path(schema_name)
-
-    if not os.path.exists(sqlite_path):
-        raise FileNotFoundError(
-            f"Spider database not found: {sqlite_path}"
-        )
+    
+    sqlite_path = get_sqlite_database_path(
+        schema_name
+    )
 
     conn = sqlite3.connect(sqlite_path)
     cursor = conn.cursor()
@@ -258,7 +263,16 @@ def main():
 
     try:
 
-        for schema_name in SCHEMAS:
+        supported_schemas = get_supported_schemas(
+            cursor
+        )
+
+        print(
+            f"Discovered {len(supported_schemas)} "
+            "supported PostgreSQL schemas."
+        )
+
+        for schema_name in supported_schemas:
 
             print()
             print("=" * 70)
