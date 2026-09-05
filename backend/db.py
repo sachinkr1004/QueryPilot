@@ -2,6 +2,8 @@ import os
 import re
 
 import psycopg2
+import sqlglot
+from sqlglot import exp
 from dotenv import load_dotenv
 
 
@@ -20,30 +22,66 @@ def get_connection():
 
 
 def is_safe_sql(sql: str) -> bool:
+    """
+    Validate that SQL is a single read-only PostgreSQL query expression.
 
-    sql_clean = sql.strip().lower()
+    Safety rules:
+    - SQL must parse successfully.
+    - Exactly one statement is allowed.
+    - The top-level statement must be a read-only query expression.
+    - No data-changing or DDL statements may appear anywhere,
+      including inside CTEs.
+    - SELECT INTO is forbidden because it creates a table.
+    - Row-locking clauses such as FOR UPDATE are forbidden.
+    """
 
-    if not (
-        sql_clean.startswith("select")
-        or sql_clean.startswith("with")
-    ):
+    if not sql or not sql.strip():
         return False
 
-    blocked_keywords = [
-        "insert ",
-        "update ",
-        "delete ",
-        "drop ",
-        "alter ",
-        "truncate ",
-        "create ",
-        "grant ",
-        "revoke "
-    ]
+    try:
+        statements = sqlglot.parse(
+            sql,
+            read="postgres"
+        )
+    except Exception:
+        return False
 
-    for keyword in blocked_keywords:
-        if keyword in sql_clean:
+    if len(statements) != 1:
+        return False
+
+    statement = statements[0]
+
+    if not isinstance(statement, exp.Query):
+        return False
+
+    blocked_nodes = (
+        exp.Insert,
+        exp.Update,
+        exp.Delete,
+        exp.Merge,
+        exp.Drop,
+        exp.Create,
+        exp.Alter,
+        exp.TruncateTable,
+        exp.Grant,
+        exp.Revoke,
+    )
+
+    for node_type in blocked_nodes:
+        if next(
+            statement.find_all(node_type),
+            None
+        ) is not None:
             return False
+
+    if next(statement.find_all(exp.Into), None) is not None:
+        return False
+
+    if next(
+        statement.find_all(exp.Lock),
+        None
+    ) is not None:
+        return False
 
     return True
 
@@ -238,7 +276,18 @@ def execute_query(sql: str):
 
     try:
 
+        # Defense in depth: PostgreSQL itself enforces that
+        # generated queries cannot modify database state.
+        conn.set_session(readonly=True)
+
         cursor = conn.cursor()
+
+        # Prevent generated queries from consuming database
+        # resources indefinitely. SET LOCAL limits the timeout
+        # to the current transaction only.
+        cursor.execute(
+            "SET LOCAL statement_timeout = '10s';"
+        )
 
         cursor.execute(
             prepared_sql
