@@ -1,4 +1,4 @@
-from db import execute_query
+from db import UnsafeSQLError, execute_query
 
 from llm.baseline_client import (
     generate_sql,
@@ -65,6 +65,10 @@ def run_query_pipeline(question: str):
             generated_sql
         )
 
+    except UnsafeSQLError:
+        # Safety-policy violations are not SQL debugging errors.
+        # Fail closed instead of asking the LLM to rewrite them.
+        raise
     except Exception as execution_error:
 
         original_error = str(

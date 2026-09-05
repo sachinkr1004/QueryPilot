@@ -10,6 +10,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+class UnsafeSQLError(ValueError):
+    """Raised when SQL violates QueryPilot's read-only safety policy."""
+
+    pass
+
+
 def get_connection():
 
     return psycopg2.connect(
@@ -246,7 +252,7 @@ def prepare_sql(sql: str) -> str:
 
     if not is_safe_sql(sql):
 
-        raise ValueError(
+        raise UnsafeSQLError(
             "Unsafe SQL blocked. "
             "Only read-only SELECT queries are allowed."
         )
@@ -257,7 +263,7 @@ def prepare_sql(sql: str) -> str:
 
     if not is_safe_sql(repaired_sql):
 
-        raise ValueError(
+        raise UnsafeSQLError(
             "Unsafe SQL blocked after SQL preparation."
         )
 

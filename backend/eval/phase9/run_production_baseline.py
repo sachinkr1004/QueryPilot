@@ -55,6 +55,27 @@ BASELINE_CONFIG = {
 
 
 # ============================================================
+# PROVIDER QUOTA GUARD
+# ============================================================
+
+class ProviderRateLimitError(RuntimeError):
+    """Raised when provider quota would contaminate evaluation."""
+
+    pass
+
+
+def raise_if_provider_rate_limited(error):
+    message = str(error).lower()
+
+    if (
+        "429" in message
+        or "rate_limit_exceeded" in message
+        or "rate limit reached" in message
+    ):
+        raise ProviderRateLimitError(str(error)) from error
+
+
+# ============================================================
 # LOAD FROZEN BENCHMARK
 # ============================================================
 
@@ -276,6 +297,7 @@ def evaluate_one(test_case):
             final_sql = generated_sql
 
         except Exception as error:
+            raise_if_provider_rate_limited(error)
             final_error = str(error)
             error_stage = "generation"
 
@@ -352,6 +374,7 @@ def evaluate_one(test_case):
                 final_sql = corrected_sql
 
             except Exception as error:
+                raise_if_provider_rate_limited(error)
                 final_error = str(error)
                 error_stage = "correction"
 
@@ -882,14 +905,34 @@ def run_baseline(
             )
             continue
 
-        result = evaluate_one(
-            test_case
-        )
+        try:
+            result = evaluate_one(
+                test_case
+            )
+        except ProviderRateLimitError as error:
+            print(
+                "⏸️ Provider rate limit reached."
+            )
+            print(
+                "Current case was NOT recorded:",
+                test_case["id"],
+            )
+            print(
+                "Completed cases preserved:",
+                len(results),
+            )
+            print(
+                "Resume later with --resume."
+            )
+            print(
+                "Provider error:",
+                str(error),
+            )
+            raise
 
         results.append(
             result
         )
-
         completed_ids.add(
             test_case["id"]
         )
@@ -1010,18 +1053,29 @@ def main():
 
     args = parser.parse_args()
 
-    (
-        cases,
-        results,
-        summary,
-        checkpoint_path,
-    ) = run_baseline(
-        experiment_id=(
-            args.experiment_id
-        ),
-        one=args.one,
-        resume=args.resume,
-    )
+    try:
+        (
+            cases,
+            results,
+            summary,
+            checkpoint_path,
+        ) = run_baseline(
+            experiment_id=(
+                args.experiment_id
+            ),
+            one=args.one,
+            resume=args.resume,
+        )
+    except ProviderRateLimitError:
+        print()
+        print(
+            "⏸️ Benchmark interrupted by provider quota."
+        )
+        print(
+            "Checkpoint preserved. Resume later "
+            "with the same experiment ID and --resume."
+        )
+        return
 
     print()
     print("=" * 80)
