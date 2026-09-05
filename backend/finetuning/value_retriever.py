@@ -811,15 +811,34 @@ def full_column_multitoken_fallback(
         except sqlite3.Error:
             return []
 
+        question_norm = normalize_value_match_text(
+            question
+        )
+        question_padded = (
+            f" {question_norm} "
+        )
+
         matches = []
-
         for row in cursor.fetchall():
-
             value = row[0]
+            value_norm = normalize_value_match_text(
+                value
+            )
 
-            if multitoken_boundary_match(
-                value,
-                question,
+            if not value_norm:
+                continue
+
+            # Preserve the existing fallback rule:
+            # single-token values are not eligible.
+            if len(value_norm.split()) < 2:
+                continue
+
+            # Equivalent to the previous normalized
+            # word-boundary regex without running one
+            # regex per database value.
+            if (
+                f" {value_norm} "
+                in question_padded
             ):
                 matches.append(
                     value
