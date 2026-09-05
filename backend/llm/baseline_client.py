@@ -85,264 +85,45 @@ def generate_sql(
     )
 
     prompt = f"""
-You are an expert PostgreSQL SQL generator.
-
-Your job is to generate a PostgreSQL query that correctly
-answers the user's question using ONLY the provided schema.
-
-You are also given similar SQL examples retrieved from a
-safe RAG database.
-
-The examples are references only.
-
-Do NOT blindly copy them.
-
-Adapt them to the current question and the current schema.
-
-
-IMPORTANT OUTPUT RULES:
-
-- Return ONLY the SQL query.
-
-- Do NOT use markdown.
-
-- Do NOT use ```sql.
-
-- Do NOT provide explanations.
-
-- Do NOT include comments.
-
-- Return one executable PostgreSQL query only.
-
-
-SCHEMA RULES:
-
-- Use ONLY tables that exist in the provided schema.
-
-- Use ONLY columns that exist in the provided schema.
-
-- Do NOT invent tables.
-
-- Do NOT invent columns.
-
-- Use the exact table names from the schema.
-
-- Use the exact column names from the schema.
-
-- PostgreSQL identifiers are case-sensitive when quoted.
-
-- ALWAYS put column names in double quotes exactly as they
-  appear in the schema.
-
-- For example, if the schema contains Name, generate "Name".
-
-- If the schema contains Singer_ID, generate "Singer_ID".
-
-- Use schema-qualified table names.
-
-- For example:
-
-  concert_singer.singer
-
-  world_1.country
-
-  employee_hire_evaluation.employee
-
-- If a table name itself contains uppercase letters, quote
-  the table name exactly as shown in the schema.
-
-- For example:
-
-  pets_1."Student"
-
-  pets_1."Pets"
-
-  pets_1."Has_Pet"
-
-
-POSTGRESQL DATA TYPE RULES:
-
-- Respect the PostgreSQL data types exactly as shown in the
-  provided schema.
-
-- If a column is defined as text, preserve its text semantics
-  unless the user's question explicitly requires numeric
-  conversion.
-
-- NEVER cast a text column to numeric merely because its
-  values appear numeric.
-
-- Do NOT use CAST(... AS numeric), ::numeric, ::integer,
-  or similar conversions unless the question explicitly
-  requires numeric conversion.
-
-- For MIN, MAX, ORDER BY, comparisons, and sorting, use the
-  column's declared schema type as-is.
-
-- Example: if Horsepower is text in the schema, use:
-
-  ORDER BY "Horsepower" ASC
-
-  rather than:
-
-  ORDER BY "Horsepower"::numeric ASC
-
-- Text values such as 'null' are ordinary text values when
-  the schema declares the column as text.
-
-- Do NOT automatically convert the text value 'null' into
-  SQL NULL.
-
-
-JOIN RULES:
-
-- Use JOIN when the question requires information from
-  multiple related tables.
-
-- Prefer relationships explicitly listed in the schema.
-
-- Every JOIN must have a complete boolean ON condition.
-
-- Every JOIN condition must compare two valid columns using
-  an operator such as =.
-
-- NEVER generate an incomplete JOIN condition such as:
-
-  ON table."Column"
-
-- Correct example:
-
-  ON hp."PetID" = p."PetID"
-
-- Before returning SQL, verify that every JOIN contains both
-  a left-hand column and a right-hand column.
-
-- Make sure every JOIN column exists in the schema.
-
-
-SELECT RULES:
-
-- When using a table alias, always select an actual column
-  through that alias.
-
-- NEVER select a bare table alias.
-
-- Wrong:
-
-  SELECT DISTINCT s
-
-- Correct:
-
-  SELECT s."Name"
-
-- Make sure every selected column exists in the provided
-  schema.
-
-- Preserve the requested output column order.
-
-- If the question asks for the number/count first and then
-  another field, SELECT the COUNT expression first.
-
-- If the question asks for another field first and then the
-  count, SELECT that field first.
-
-
-COUNTING RULES:
-
-- For counting rows, use COUNT(*).
-
-- Use COUNT(DISTINCT ...) only when the question explicitly
-  asks for distinct or unique values, or when it is logically
-  necessary.
-
-- Do NOT add DISTINCT automatically.
-
-
-DISTINCT RULES:
-
-- Do NOT use DISTINCT unless the user's question explicitly
-  asks for distinct, different, or unique values.
-
-- Do NOT use DISTINCT merely because a JOIN may create
-  duplicate rows.
-
-- Preserve legitimate duplicate rows when the question does
-  not request uniqueness.
-
-
-ORDERING RULES:
-
-- Use ORDER BY when the question asks for minimum, maximum,
-  highest, lowest, smallest, largest, oldest, youngest,
-  ascending, or descending results.
-
-- Respect the declared schema data type when ordering.
-
-- Do NOT silently change TEXT ordering into numeric ordering.
-
-- Use LIMIT only when appropriate for the question.
-
-- Do NOT invent a secondary tie-breaker unless the question
-  requires one.
-
-
-AGGREGATION RULES:
-
-- Use GROUP BY when returning an aggregate for each category.
-
-- Every selected non-aggregate column must be included in
-  GROUP BY when PostgreSQL requires it.
-
-- Use HAVING for conditions that depend on aggregate values.
-
-- Use WHERE for conditions on individual rows before
-  aggregation.
-
-
-FINAL VERIFICATION:
-
-Before returning the SQL, silently verify:
-
-1. Every table exists in the schema.
-
-2. Every column exists in the schema.
-
-3. Every column uses the correct capitalization.
-
-4. Every required mixed-case identifier is quoted.
-
-5. Every JOIN has a complete valid condition.
-
-6. Every GROUP BY is valid PostgreSQL.
-
-7. The selected columns are in the order requested by the
-   question.
-
-8. DISTINCT is used only when actually required.
-
-9. The declared PostgreSQL data types have been preserved.
-
-10. No unnecessary numeric casts were added.
-
-11. The SQL is executable PostgreSQL.
-
-12. Only the SQL query will be returned.
-
+Generate one executable PostgreSQL query answering the
+question using ONLY the provided schema and safe RAG examples.
+RAG examples are references only; adapt them to the current
+question and schema.
+
+Rules:
+- Return SQL only: no markdown, explanation, comments, or fences.
+- Use only schema tables/columns; never invent identifiers.
+- Preserve exact identifier capitalization. Double-quote column
+  names exactly as shown. Schema-qualify tables and quote
+  mixed-case table names exactly.
+- Preserve declared PostgreSQL data types. Never cast text to
+  numeric just because values look numeric, and treat textual
+  'null' as text when the schema declares text.
+- Use JOINs only when needed and prefer schema relationships.
+  Every JOIN must have a complete boolean ON condition comparing
+  valid columns.
+- Select real columns, never bare aliases, and preserve requested
+  output-column order.
+- Use COUNT(*) for row counts. Use COUNT(DISTINCT ...) or DISTINCT
+  only when explicitly requested or logically necessary; do not
+  add DISTINCT merely to remove JOIN duplicates.
+- Use ORDER BY/LIMIT when required by the question, preserve the
+  declared type's ordering semantics, and do not invent secondary
+  tie-breakers.
+- For aggregates, use valid GROUP BY, HAVING for aggregate
+  conditions, and WHERE for row conditions.
+- Before returning, verify all identifiers exist, quoting and
+  JOIN/GROUP BY syntax are valid, data types are preserved, and
+  the SQL answers the question.
 
 DATABASE SCHEMA:
-
 {schema_text}
 
-
 SAFE RAG EXAMPLES:
-
 {example_text}
 
-
 USER QUESTION:
-
 {question}
-
 
 POSTGRESQL SQL:
 """
