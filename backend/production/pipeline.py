@@ -1,4 +1,9 @@
-from db import UnsafeSQLError, execute_query
+import time
+
+from db import (
+    UnsafeSQLError,
+    execute_query_with_columns,
+)
 
 from llm.baseline_client import (
     generate_sql,
@@ -21,6 +26,7 @@ MAX_CORRECTION_ATTEMPTS = 1
 # ============================================================
 
 def run_query_pipeline(question: str):
+    pipeline_started_at = time.perf_counter()
 
     # --------------------------------------------------------
     # Step 1: Retrieve database + schema
@@ -55,13 +61,14 @@ def run_query_pipeline(question: str):
     correction_attempts = 0
     original_error = None
     final_sql = generated_sql
+    columns = []
 
     # --------------------------------------------------------
     # Step 4: Execute initial SQL
     # --------------------------------------------------------
 
     try:
-        result = execute_query(
+        columns, result = execute_query_with_columns(
             generated_sql
         )
 
@@ -105,7 +112,7 @@ def run_query_pipeline(question: str):
             # ------------------------------------------------
 
             try:
-                result = execute_query(
+                columns, result = execute_query_with_columns(
                     corrected_sql
                 )
                 break
@@ -152,5 +159,10 @@ def run_query_pipeline(question: str):
         "original_error": original_error,
         "corrected_sql": corrected_sql,
         "final_sql": final_sql,
+        "columns": columns,
         "result": result,
+        "latency_ms": round(
+            (time.perf_counter() - pipeline_started_at) * 1000,
+            2,
+        ),
     }

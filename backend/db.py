@@ -292,18 +292,13 @@ def prepare_sql(sql: str) -> str:
     return repaired_sql
 
 
-def execute_query(sql: str):
-
-    prepared_sql = prepare_sql(
-        sql
-    )
+def _execute_query(sql: str):
+    prepared_sql = prepare_sql(sql)
 
     conn = get_connection()
-
     cursor = None
 
     try:
-
         # Defense in depth: PostgreSQL itself enforces that
         # generated queries cannot modify database state.
         conn.set_session(readonly=True)
@@ -317,17 +312,27 @@ def execute_query(sql: str):
             "SET LOCAL statement_timeout = '10s';"
         )
 
-        cursor.execute(
-            prepared_sql
-        )
+        cursor.execute(prepared_sql)
 
         rows = cursor.fetchall()
+        columns = [
+            description.name
+            for description in cursor.description
+        ]
 
-        return rows
+        return columns, rows
 
     finally:
-
         if cursor is not None:
             cursor.close()
 
         conn.close()
+
+
+def execute_query(sql: str):
+    _, rows = _execute_query(sql)
+    return rows
+
+
+def execute_query_with_columns(sql: str):
+    return _execute_query(sql)

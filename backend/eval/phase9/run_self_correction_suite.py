@@ -18,7 +18,7 @@ def run_case(
         "retrieve_examples": pipeline.retrieve_examples,
         "generate_sql": pipeline.generate_sql,
         "correct_sql": pipeline.correct_sql,
-        "execute_query": pipeline.execute_query,
+        "execute_query_with_columns": pipeline.execute_query_with_columns,
     }
 
     calls = {
@@ -60,9 +60,9 @@ def run_case(
             if isinstance(action, Exception):
                 raise action
 
-            return action
+            return ["id"], action
 
-        pipeline.execute_query = fake_execute_query
+        pipeline.execute_query_with_columns = fake_execute_query
 
         caught_exception = None
         result = None
