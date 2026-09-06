@@ -1,4 +1,5 @@
 import os
+import httpx
 
 from dotenv import load_dotenv
 from groq import Groq
@@ -11,8 +12,76 @@ from groq import Groq
 load_dotenv()
 
 client = Groq(
-    api_key=os.getenv("GROQ_API_KEY")
+    api_key=os.getenv("GROQ_API_KEY"),
+    max_retries=2,
+    timeout=httpx.Timeout(
+        connect=5.0,
+        read=60.0,
+        write=60.0,
+        pool=60.0,
+    ),
 )
+
+
+# ============================================================
+# LLM RESPONSE RELIABILITY
+# ============================================================
+
+class LLMResponseError(RuntimeError):
+    """Raised when the provider returns an unusable LLM response."""
+
+    pass
+
+
+def extract_response_text(response) -> str:
+    """Return non-empty model text or raise a controlled error."""
+
+    choices = getattr(response, "choices", None)
+
+    if not choices:
+        raise LLMResponseError(
+            "LLM response contained no choices."
+        )
+
+    message = getattr(choices[0], "message", None)
+
+    if message is None:
+        raise LLMResponseError(
+            "LLM response contained no message."
+        )
+
+    content = getattr(message, "content", None)
+
+    if not isinstance(content, str) or not content.strip():
+        choice = choices[0]
+        finish_reason = getattr(choice, "finish_reason", None)
+
+        usage = getattr(response, "usage", None)
+        completion_tokens = getattr(
+            usage,
+            "completion_tokens",
+            None,
+        )
+
+        details = getattr(
+            usage,
+            "completion_tokens_details",
+            None,
+        )
+        reasoning_tokens = getattr(
+            details,
+            "reasoning_tokens",
+            None,
+        )
+
+        raise LLMResponseError(
+            "LLM response contained no usable text. "
+            f"finish_reason={finish_reason!r}, "
+            f"completion_tokens={completion_tokens!r}, "
+            f"reasoning_tokens={reasoning_tokens!r}."
+        )
+
+    return content
 
 
 # ============================================================
@@ -130,7 +199,7 @@ POSTGRESQL SQL:
 
     response = client.chat.completions.create(
         model="openai/gpt-oss-120b",
-        max_completion_tokens=1000,
+        max_completion_tokens=2000,
         messages=[
             {
                 "role": "user",
@@ -139,12 +208,7 @@ POSTGRESQL SQL:
         ]
     )
 
-    sql = (
-        response
-        .choices[0]
-        .message
-        .content
-    )
+    sql = extract_response_text(response)
 
     return clean_sql(sql)
 
@@ -318,12 +382,7 @@ CORRECTED POSTGRESQL SQL:
         ]
     )
 
-    sql = (
-        response
-        .choices[0]
-        .message
-        .content
-    )
+    sql = extract_response_text(response)
 
     return clean_sql(sql)
 
@@ -607,12 +666,7 @@ REVIEW DECISION:
         ],
     )
 
-    review_response = (
-        response
-        .choices[0]
-        .message
-        .content
-    )
+    review_response = extract_response_text(response)
 
     review_response = (
         review_response.strip()
