@@ -1,5 +1,6 @@
 import os
 import re
+import time
 
 import psycopg2
 import sqlglot
@@ -8,6 +9,12 @@ from dotenv import load_dotenv
 
 
 load_dotenv()
+
+
+TABLE_METADATA_CACHE_TTL_SECONDS = 60.0
+
+_table_metadata_cache = None
+_table_metadata_cache_loaded_at = 0.0
 
 
 class UnsafeSQLError(ValueError):
@@ -109,6 +116,18 @@ def get_table_metadata():
     PostgreSQL table name.
     """
 
+    global _table_metadata_cache
+    global _table_metadata_cache_loaded_at
+
+    now = time.monotonic()
+
+    if (
+        _table_metadata_cache is not None
+        and now - _table_metadata_cache_loaded_at
+        < TABLE_METADATA_CACHE_TTL_SECONDS
+    ):
+        return _table_metadata_cache
+
     conn = get_connection()
     cursor = None
 
@@ -142,6 +161,9 @@ def get_table_metadata():
                     table_name.lower()
                 )
             ] = table_name
+
+        _table_metadata_cache = metadata
+        _table_metadata_cache_loaded_at = time.monotonic()
 
         return metadata
 
