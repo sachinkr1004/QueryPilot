@@ -1,14 +1,10 @@
-import os
 import re
 import time
 
 import psycopg2
 import sqlglot
 from sqlglot import exp
-from dotenv import load_dotenv
-
-
-load_dotenv()
+from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER
 
 
 TABLE_METADATA_CACHE_TTL_SECONDS = 60.0
@@ -26,11 +22,11 @@ class UnsafeSQLError(ValueError):
 def get_connection():
 
     return psycopg2.connect(
-        dbname=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        host=os.getenv("DB_HOST"),
-        port=os.getenv("DB_PORT")
+        dbname=DB_NAME,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        host=DB_HOST,
+        port=DB_PORT
     )
 
 

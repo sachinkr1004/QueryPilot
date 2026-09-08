@@ -1,7 +1,6 @@
-import os
 import httpx
 
-from dotenv import load_dotenv
+from config import GROQ_API_KEY
 from groq import Groq
 
 
@@ -9,10 +8,9 @@ from groq import Groq
 # ENVIRONMENT + GROQ CLIENT
 # ============================================================
 
-load_dotenv()
 
 client = Groq(
-    api_key=os.getenv("GROQ_API_KEY"),
+    api_key=GROQ_API_KEY,
     max_retries=2,
     timeout=httpx.Timeout(
         connect=5.0,
