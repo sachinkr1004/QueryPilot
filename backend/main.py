@@ -1,3 +1,5 @@
+import logging
+import uuid
 from typing import Any, Literal
 
 from fastapi import FastAPI
@@ -6,6 +8,10 @@ from pydantic import BaseModel, Field, field_validator
 
 from db import UnsafeSQLError
 from production.pipeline import run_query_pipeline
+
+
+logger = logging.getLogger("querypilot.api")
+logger.setLevel(logging.INFO)
 
 
 app = FastAPI(
@@ -69,8 +75,21 @@ def _error_response(
 
 
 def _run_query(question: str):
+    request_id = str(uuid.uuid4())
+
     try:
         result = run_query_pipeline(question)
+
+        logger.info(
+            "event=query_success request_id=%s "
+            "database=%s latency_ms=%s "
+            "correction_used=%s correction_attempts=%s",
+            request_id,
+            result["database"],
+            result["latency_ms"],
+            result["correction_used"],
+            result["correction_attempts"],
+        )
 
         return {
             "status": "success",
@@ -88,7 +107,12 @@ def _run_query(question: str):
             "latency_ms": result["latency_ms"],
         }
 
-    except UnsafeSQLError:
+    except UnsafeSQLError as error:
+        logger.warning(
+            "event=query_failed request_id=%s error_type=%s",
+            request_id,
+            type(error).__name__,
+        )
         return _error_response(
             status_code=500,
             message=(
@@ -96,7 +120,12 @@ def _run_query(question: str):
             ),
         )
 
-    except RuntimeError:
+    except RuntimeError as error:
+        logger.error(
+            "event=query_failed request_id=%s error_type=%s",
+            request_id,
+            type(error).__name__,
+        )
         return _error_response(
             status_code=500,
             message=(
@@ -104,7 +133,12 @@ def _run_query(question: str):
             ),
         )
 
-    except Exception:
+    except Exception as error:
+        logger.error(
+            "event=query_failed request_id=%s error_type=%s",
+            request_id,
+            type(error).__name__,
+        )
         return _error_response(
             status_code=500,
             message=(
